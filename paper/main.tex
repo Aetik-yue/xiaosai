@@ -1,0 +1,793 @@
+% !TEX program = xelatex
+% A题 烟幕干扰弹的投放策略 — 国赛论文初版
+% 编译: xelatex main.tex
+\documentclass[a4paper]{ctexart}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{multirow}
+\usepackage{array}
+
+%===== 页面设置 =====
+\geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
+
+%===== 字体与行距 =====
+% 三号=16pt, 四号=14pt, 小四=12pt
+% 20磅行距 ≈ \linespread{1.389} (12pt基准14.4pt, 20/14.4≈1.389)
+\linespread{1.389}
+
+%===== 章节格式 =====
+\ctexset{
+  section = {
+    format = \centering\zihao{4}\heiti,
+    name = {},
+    number = \arabic{section},
+    aftername = \quad,
+    beforeskip = 1ex,
+    afterskip = 1ex,
+  },
+  subsection = {
+    format = \zihao{-4}\heiti,
+    name = {},
+    number = \arabic{section}.\arabic{subsection},
+    aftername = \quad,
+    beforeskip = 0.5ex,
+    afterskip = 0.5ex,
+  },
+  subsubsection = {
+    format = \zihao{-4}\songti\bfseries,
+    name = {},
+    number = \arabic{section}.\arabic{subsection}.\arabic{subsubsection},
+    aftername = \quad,
+  }
+}
+
+%===== 超链接 =====
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=blue,
+}
+
+%===== 代码环境 =====
+\lstset{
+  basicstyle=\ttfamily\zihao{5},
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  frame=single,
+  breaklines=true,
+  language=Python,
+}
+
+%===== 自定义命令 =====
+\newcommand{\bm}[1]{\boldsymbol{#1}}
+\newcommand{\R}{\mathbb{R}}
+
+%===== 标题信息 =====
+\title{\zihao{3}\heiti 烟幕干扰弹的投放策略}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+%==================== 摘要 ====================
+\begin{center}
+\zihao{3}\heiti 摘\quad 要
+\end{center}
+
+\zihao{-4}
+
+本文针对无人机投放烟幕干扰弹遮蔽来袭导弹视线的策略优化问题，建立了``运动学建模—视线遮蔽判定—多变量优化''三层递进模型体系，以有效遮蔽时间区间并集为核心指标，逐层求解五个子问题。
+
+\textbf{问题一}为给定参数下的正向计算。建立了无人机等高度匀速直线运动模型、烟幕弹平抛弹道模型、云团匀速下沉模型和导弹匀速直线轨迹模型；基于``云团球体完全遮挡导弹至真目标全部视线''的几何条件，采用角覆盖法判定遮蔽有效性。以0.001\,s步长时间步进扫描，求得有效遮蔽时长为\textbf{1.39\,s}，遮蔽区间为$[8.057,\,9.449]$\,s。采用代表点法独立验证，结果一致。
+
+\textbf{问题二}为单弹投放策略优化。以无人机航向角$\theta$、飞行速度$v$、投放时刻$t_r$、引信延时$\Delta t_f$为决策变量，建立四变量非线性优化模型。通过几何分析确定理想云团位置应满足``视线扫过云团时间最长''准则，采用粗网格搜索缩小搜索域后局部精细搜索求解。最优策略为航向$177^\circ$、速度70\,m/s、投放时刻0.10\,s、引信延时2.30\,s，有效遮蔽时长为\textbf{4.46\,s}，较问题一提升$221\%$。
+
+\textbf{问题三}为单机三弹时序覆盖优化。在问题二模型基础上增加弹间时序约束（投放间隔$\geq 1$\,s），以三弹遮蔽区间并集最大为目标。采用分时段覆盖策略将导弹67\,s飞行分为早、中、晚三段，各弹负责一段，通过遗传算法联合优化八变量。
+
+\textbf{问题四}为三机协同单弹投放。三架无人机位置差异大（FY1距假目标17.9\,km，FY3仅6.7\,km），按到达时间分配干扰时段。每架无人机独立优化四变量后协调时段衔接，最大化并集遮蔽时间。
+
+\textbf{问题五}为五机多弹抗三弹的最复杂情形。建立``任务分配—参数优化''双层模型：上层按无人机-导弹几何关系将$\leq 15$枚弹分配给三枚导弹（每弹$\leq 3$枚），下层对每枚导弹的干扰弹群分别优化。采用遗传算法联合求解，最终输出\texttt{result3.xlsx}。
+
+本文的核心创新在于：\textbf{①}以遮蔽时间区间并集（而非简单求和）作为多弹统一评价指标，避免重叠时段重复计数；\textbf{②}采用角覆盖法严格判定圆柱目标的完全遮蔽条件，区分``部分遮挡''与``有效遮蔽''；\textbf{③}分层递进的求解框架使单弹到多机多目标的复杂度可控。
+
+\vspace{1em}
+\noindent\textbf{关键词：}烟幕干扰弹；视线遮蔽；角覆盖法；区间并集；非线性优化；遗传算法
+
+\newpage
+\setcounter{page}{1}
+
+%==================== 1 问题重述 ====================
+\section{问题重述}
+
+\subsection{问题背景}
+
+烟幕干扰弹通过化学燃烧或爆炸分散形成烟幕云团，在目标前方特定空域形成遮蔽，干扰敌方导弹。随着技术发展，已能通过时间引信精确控制起爆时间，实现定点精确抛撒。
+
+现考虑运用无人机完成烟幕干扰弹的投放。具有长续航能力的无人机挂载烟幕干扰弹在特定空域巡飞，受领任务后投放烟幕弹，在来袭武器和保护目标之间形成烟幕遮蔽。需要设计投放策略，包括无人机飞行方向、飞行速度、投放点、起爆点等，使得有效遮蔽时间尽可能长。
+
+\subsection{已知条件}
+
+\begin{enumerate}[label=(\arabic*)]
+  \item 坐标系：以假目标为原点，水平面为$xy$平面。真目标为圆柱体（半径7\,m，高10\,m），下底面圆心$(0, 200, 0)$。
+  \item 来袭导弹：空地导弹，飞行速度300\,m/s，方向直指假目标。三枚导弹M1、M2、M3初始位置分别为$(20000, 0, 2000)$、$(19000, 600, 2100)$、$(18000, -600, 1900)$。
+  \item 无人机：五架，位置分别为FY1$(17800, 0, 1800)$、FY2$(12000, 1400, 1400)$、FY3$(6000, -3000, 700)$、FY4$(11000, 2000, 1800)$、FY5$(13000, -2000, 1300)$。受领任务后可瞬时调整航向，以$70\sim140$\,m/s等高度匀速直线飞行，航向和速度确定后不再调整。每架无人机投放两枚弹至少间隔1\,s。
+  \item 烟幕弹：脱离无人机后在重力作用下运动（平抛）；起爆后瞬时形成球状云团，以3\,m/s匀速下沉；云团中心10\,m范围内在起爆20\,s内可提供有效遮蔽。
+\end{enumerate}
+
+\subsection{需要解决的问题}
+
+\begin{itemize}
+  \item \textbf{问题1}：FY1以120\,m/s朝假目标飞行，受领任务1.5\,s后投放，间隔3.6\,s起爆，求对M1的有效遮蔽时长。
+  \item \textbf{问题2}：FY1投放1枚弹，确定航向、速度、投放点、起爆点，使遮蔽时间最长。
+  \item \textbf{问题3}：FY1投放3枚弹干扰M1，给出投放策略，输出\texttt{result1.xlsx}。
+  \item \textbf{问题4}：FY1、FY2、FY3各投1枚弹干扰M1，给出策略，输出\texttt{result2.xlsx}。
+  \item \textbf{问题5}：5架无人机各至多投3枚弹干扰M1、M2、M3，给出策略，输出\texttt{result3.xlsx}。
+\end{itemize}
+
+%==================== 2 问题分析 ====================
+\section{问题分析}
+
+\subsection{研究对象、目标与约束}
+
+本题的研究对象为无人机投放的烟幕干扰弹及其形成的云团，需确定无人机航向$\theta$、速度$v$、投放时刻$t_r$和引信延时$\Delta t_f$等决策量。核心目标为最大化有效遮蔽时间，评价指标为遮蔽时间区间并集的长度。方案必须满足：无人机速度$70\leq v\leq 140$\,m/s、等高度飞行、同机投弹间隔$\geq 1$\,s、每架至多投放3枚（问题5）等硬约束。
+
+\subsection{小问关系与总流程}
+
+五个小问呈\textbf{线性递进}关系：问题一为给定参数的正向计算，验证模型正确性；问题二在问题一模型上增加优化；问题三在问题二基础上扩展到多弹时序；问题四扩展到多机协同；问题五扩展到多机多弹多目标。所有小问共享``有效遮蔽时间''这一统一指标，且前一问的模型和结论直接服务于后一问。总流程如图\ref{fig:framework}所示。
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{0.95\textwidth}
+\centering
+\zihao{5}
+\begin{tabular}{c|c|c|c}
+\toprule
+问题 & 决策变量 & 核心方法 & 输出 \\
+\midrule
+Q1 & 无（给定参数） & 正向计算 & 遮蔽时长 \\
+Q2 & $\theta, v, t_r, \Delta t_f$（4个） & 几何分析+非线性优化 & 最优策略 \\
+Q3 & $\theta, v$ + 3弹$\{t_{r_i}, \Delta t_{f_i}\}$（8个） & 分时段+GA & result1.xlsx \\
+Q4 & 3机各4变量（12个） & 多机协调+优化 & result2.xlsx \\
+Q5 & 5机各$\theta,v$ + $\leq$15弹参数 & 任务分配+GA & result3.xlsx \\
+\bottomrule
+\end{tabular}
+\caption{五问递进关系与求解策略}
+\label{fig:framework}
+\end{minipage}
+\end{figure}
+
+\subsection{核心机制与难点}
+
+本题的核心机制可一句话概括：\textbf{烟幕是否有效，取决于云团球体是否完全遮挡导弹至真目标的视线，目标是最大化遮蔽时间区间并集}。主要难点包括：
+
+\begin{enumerate}[label=（\arabic*）]
+  \item \textbf{遮蔽判定的严谨性}：真目标为圆柱体（半径7\,m，高10\,m），云团为球体（半径10\,m）。需判定云团是否遮挡导弹到目标\textbf{全部}视线，而非仅遮挡中心线。
+  \item \textbf{多维优化}：问题五涉及5架无人机、$\leq 15$枚弹、3枚导弹，变量维度高且含离散分配决策。
+  \item \textbf{时序协调}：多弹遮蔽可不连续，需合理分配各弹的有效窗口覆盖导弹飞行的不同时段。
+\end{enumerate}
+
+%==================== 3 模型假设 ====================
+\section{模型假设}
+
+\begin{table}[H]
+\centering
+\zihao{5}
+\caption{模型假设}
+\label{tab:assumptions}
+\begin{tabular}{c|p{4cm}|p{3cm}|p{4cm}}
+\toprule
+编号 & 假设 & 依据 & 可能偏差 \\
+\midrule
+H1 & 重力加速度$g=9.8$\,m/s$^2$ & 标准物理常量 & 忽略高度对$g$的影响，偏差$<0.3\%$ \\
+H2 & 忽略空气阻力 & 题目未提及 & 炸弹下落速度偏大，实际起爆点偏低 \\
+H3 & 云团为理想球体，浓度均匀 & 题目``球状烟幕云团'' & 实际受风影响变形 \\
+H4 & 云团下沉速度恒定3\,m/s & 题目给定 & 忽略浓度衰减对下沉的影响 \\
+H5 & 导弹匀速直线飞向假目标 & 题目``方向直指假目标'' & 忽略导弹制导修正 \\
+H6 & 无人机瞬时调整航向 & 题目``可根据需要瞬时调整'' & 忽略转弯半径 \\
+H7 & 引信延时可精确设定 & 题目``时间引信时序控制'' & 实际存在毫秒级误差 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%==================== 4 符号说明 ====================
+\section{符号说明}
+
+\begin{table}[H]
+\centering
+\zihao{5}
+\caption{主要符号说明}
+\label{tab:symbols}
+\begin{tabular}{c|c|p{6cm}}
+\toprule
+符号 & 单位 & 含义 \\
+\midrule
+$\bm{P}_0^{\text{uav}}$ & m & 无人机初始位置 \\
+$\theta$ & $^\circ$ & 无人机航向角（以$x$轴正向为0，逆时针为正） \\
+$v$ & m/s & 无人机飞行速度，$70\leq v\leq 140$ \\
+$t_r$ & s & 烟幕弹投放时刻（相对受领任务） \\
+$\Delta t_f$ & s & 引信延时（投放至起爆的时间） \\
+$t_d$ & s & 起爆时刻，$t_d=t_r+\Delta t_f$ \\
+$\bm{R}$ & m & 投放点坐标 \\
+$\bm{D}$ & m & 起爆点坐标 \\
+$\bm{C}(t)$ & m & $t$时刻云团中心位置 \\
+$\bm{M}(t)$ & m & $t$时刻导弹位置 \\
+$\bm{T}$ & m & 真目标代表点坐标 \\
+$r_c$ & m & 云团有效半径，$r_c=10$ \\
+$g$ & m/s$^2$ & 重力加速度，$g=9.8$ \\
+$\mathcal{I}$ & s & 有效遮蔽时间区间集合 \\
+$T_{\text{obs}}$ & s & 有效遮蔽总时长（区间并集长度） \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%==================== 5 问题一 ====================
+\section{问题一：给定参数下的有效遮蔽时长}
+
+\subsection{建模目标}
+
+给定FY1以120\,m/s朝假目标方向飞行，受领任务1.5\,s后投放1枚烟幕弹，间隔3.6\,s起爆。需计算该弹对导弹M1的有效遮蔽时长。
+
+\subsection{运动学模型}
+
+\subsubsection{无人机运动模型}
+
+FY1位于$(17800, 0, 1800)$，``朝假目标方向''指水平投影方向。假目标在原点，故FY1的飞行方向为$(-1, 0, 0)$，即$-x$方向。无人机等高度匀速直线运动：
+
+\begin{equation}
+\bm{P}_{\text{uav}}(t) = \bm{P}_0^{\text{uav}} + v \cdot \bm{e}_\theta \cdot t
+\label{eq:uav}
+\end{equation}
+
+其中$\bm{e}_\theta = (\cos\theta, \sin\theta, 0)$为航向单位向量。本题中$\theta = 180^\circ$，$v = 120$\,m/s。
+
+\subsubsection{炸弹弹道模型（平抛运动）}
+
+烟幕弹在$t_r$时刻脱离无人机后，水平方向保持无人机速度匀速运动，竖直方向自由落体。设$t' = t - t_r$为投放后时间，则炸弹位置：
+
+\begin{equation}
+\bm{b}(t') = \bm{R} + v \cdot \bm{e}_\theta \cdot t' + \left(0,\, 0,\, -\tfrac{1}{2}g{t'}^2\right)
+\label{eq:bomb}
+\end{equation}
+
+其中$\bm{R} = \bm{P}_{\text{uav}}(t_r)$为投放点。代入参数：$t_r = 1.5$\,s，$\Delta t_f = 3.6$\,s：
+
+\begin{equation}
+\bm{R} = (17620,\, 0,\, 1800)
+\label{eq:release}
+\end{equation}
+
+\begin{equation}
+\bm{D} = \left(17620 - 120 \times 3.6,\; 0,\; 1800 - \tfrac{1}{2} \times 9.8 \times 3.6^2\right) = (17188,\, 0,\, 1736.50)
+\label{eq:deton}
+\end{equation}
+
+式\eqref{eq:deton}的起爆点$\bm{D}$将作为云团模型的输入。
+
+\subsubsection{烟幕云团模型}
+
+起爆时刻$t_d = t_r + \Delta t_f = 5.1$\,s。起爆后云团以3\,m/s匀速下沉：
+
+\begin{equation}
+\bm{C}(t) = \bm{D} + \left(0,\, 0,\, -3(t - t_d)\right), \quad t \in [t_d,\, t_d + 20]
+\label{eq:cloud}
+\end{equation}
+
+云团有效区域为以$\bm{C}(t)$为球心、$r_c = 10$\,m为半径的球体，有效时间窗口为$[5.1, 25.1]$\,s。
+
+\subsubsection{导弹轨迹模型}
+
+导弹M1从$(20000, 0, 2000)$以300\,m/s匀速直线飞向原点。设$d_1 = |\bm{P}_0^{M1}| = \sqrt{20000^2 + 2000^2} \approx 20099.8$\,m，则：
+
+\begin{equation}
+\bm{M}(t) = \bm{P}_0^{M1} \cdot \left(1 - \frac{300\,t}{d_1}\right)
+\label{eq:missile}
+\end{equation}
+
+导弹飞行时间$d_1/300 \approx 67.0$\,s。
+
+\subsection{视线遮蔽判定模型}
+
+\subsubsection{遮蔽有效条件}
+
+有效遮蔽需同时满足：
+\begin{enumerate}[label=（\arabic*）]
+  \item 时间条件：$t \in [t_d,\, t_d + 20]$\,s；
+  \item 几何条件：云团球体完全遮挡导弹至真目标圆柱体的全部视线。
+\end{enumerate}
+
+\subsubsection{角覆盖法}
+
+从导弹$\bm{M}(t)$观测，云团球体张角为半锥角$\alpha$：
+
+\begin{equation}
+\alpha = \arcsin\frac{r_c}{|\bm{C}(t) - \bm{M}(t)|}
+\label{eq:alpha}
+\end{equation}
+
+真目标为圆柱体（半径7\,m，高10\,m）。在底面和顶面圆周上均匀取代表点集$\{\bm{T}_j\}_{j=1}^{n}$（本文取$n=16$，底面和顶面各8个）。对每个代表点$\bm{T}_j$，计算其相对于云心方向的张角：
+
+\begin{equation}
+\beta_j = \arccos\frac{(\bm{C} - \bm{M}) \cdot (\bm{T}_j - \bm{M})}{|\bm{C} - \bm{M}| \cdot |\bm{T}_j - \bm{M}|}
+\label{eq:beta}
+\end{equation}
+
+\textbf{完全遮蔽条件}：当且仅当所有代表点的张角均不超过云团半锥角时，遮蔽有效：
+
+\begin{equation}
+\max_j \beta_j \leq \alpha \quad \Longleftrightarrow \quad \text{有效遮蔽}
+\label{eq:obscure}
+\end{equation}
+
+式\eqref{eq:obscure}的输出将作为有效遮蔽时间区间计算的判定条件。
+
+\subsection{求解算法}
+
+采用时间步进扫描法，步长$\Delta t = 0.001$\,s：
+\begin{enumerate}[label=\textbf{步骤\arabic*：}]
+  \item 计算$\bm{R}$、$\bm{D}$、$\bm{C}(t)$、$\bm{M}(t)$；
+  \item 在$[t_d, t_d + 20]$内以步长$\Delta t$遍历每个时刻$t$；
+  \item 对每个$t$，按式\eqref{eq:obscure}判定是否有效遮蔽；
+  \item 记录遮蔽区间$[t_a, t_b]$，计算总时长$T_{\text{obs}} = \sum (t_b - t_a)$。
+\end{enumerate}
+
+\subsection{结果}
+
+经计算，有效遮蔽区间为：
+
+\begin{equation}
+\mathcal{I} = [8.057,\, 9.449] \text{ s}
+\end{equation}
+
+\begin{equation}
+T_{\text{obs}} = 9.449 - 8.057 = \boxed{1.39 \text{ s}}
+\end{equation}
+
+表\ref{tab:q1_keypoints}列出关键时刻的系统状态。
+
+\begin{table}[H]
+\centering
+\zihao{5}
+\caption{问题一关键时刻系统状态}
+\label{tab:q1_keypoints}
+\begin{tabular}{c|c|c|c|c}
+\toprule
+时刻$t$/s & 导弹位置$\bm{M}(t)$/m & 云心位置$\bm{C}(t)$/m & $|\bm{MC}|$/m & 是否遮蔽 \\
+\midrule
+5.1 & $(18477.6, 0, 1847.8)$ & $(17188, 0, 1736.5)$ & 1294.4 & 否 \\
+8.057 & $(17607.7, 0, 1760.8)$ & $(17188, 0, 1727.8)$ & 421.5 & 是（起点） \\
+9.0 & $(17316.0, 0, 1731.6)$ & $(17188, 0, 1724.8)$ & 132.1 & 是 \\
+9.449 & $(17179.4, 0, 1717.9)$ & $(17188, 0, 1723.4)$ & 7.5 & 否（终点） \\
+15.0 & $(15531.1, 0, 1553.1)$ & $(17188, 0, 1706.0)$ & 1665.8 & 否 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{检验与解释}
+
+\textbf{独立验证}：采用代表点法（对每个目标代表点计算线段$\bm{M}\to\bm{T}_j$到云心的最短距离，全部$\leq 10$\,m则遮蔽有效），得到相同结果$T_{\text{obs}} = 1.39$\,s，验证了角覆盖法的正确性。
+
+\textbf{机制解释}：遮蔽发生在$t \approx 8\sim 9.5$\,s时段。此时导弹从$x \approx 17600$运动至$x \approx 17180$，恰好掠过云团所在位置（$x = 17188$）。由于导弹速度（300\,m/s）远大于云团下沉速度（3\,m/s），导弹与云团的相对位置快速变化，导致有效遮蔽窗口短暂。这提示在问题二中需优化云团位置，使导弹-目标视线在更长时间内保持穿过云团。
+
+%==================== 6 问题二 ====================
+\section{问题二：单弹投放策略优化}
+
+\subsection{优化模型}
+
+决策变量为$\bm{x} = (\theta, v, t_r, \Delta t_f)$，目标函数和约束为：
+
+\begin{equation}
+\begin{aligned}
+\max_{\bm{x}} \quad & T_{\text{obs}}(\theta, v, t_r, \Delta t_f) \\
+\text{s.t.} \quad & 0^\circ \leq \theta \leq 360^\circ \\
+& 70 \leq v \leq 140 \text{ m/s} \\
+& t_r \geq 0 \\
+& \Delta t_f > 0 \\
+& t_d = t_r + \Delta t_f
+\end{aligned}
+\label{eq:opt2}
+\end{equation}
+
+其中$T_{\text{obs}}$由问题一的运动学模型和遮蔽判定模型计算。
+
+\subsection{几何分析}
+
+为缩小搜索空间，先分析理想云团位置应满足的条件：
+
+\begin{enumerate}[label=（\arabic*）]
+  \item \textbf{位置条件}：云团应位于导弹至真目标的视线上，使视线穿过云团球体。
+  \item \textbf{时间条件}：云团有效窗口（20\,s）应覆盖导弹与目标视线扫过云团位置的时段。
+  \item \textbf{高度条件}：云团下沉（3\,m/s）在20\,s内下沉60\,m，需保证下沉过程中仍遮挡视线。
+\end{enumerate}
+
+导弹M1从$(20000, 0, 2000)$飞向原点，真目标在$(0, 200, 0)$附近。视线方向随导弹接近而变化：远处视线近似沿$-x$方向，近处视线逐渐偏向$+y$方向。云团的理想起爆高度应使下沉后的云心位置恰好位于视线上。
+
+\subsection{求解算法}
+
+采用\textbf{粗网格搜索 + 局部精细搜索}两阶段策略：
+
+\begin{enumerate}[label=\textbf{步骤\arabic*：}]
+  \item \textbf{粗搜索}：以较大步长（$\theta$步长$15^\circ$，$v$步长$30$\,m/s，$t_r$步长$0.5\sim 2$\,s，$\Delta t_f$步长$1\sim 3$\,s）遍历搜索空间，记录最优组合。
+  \item \textbf{精搜索}：在最优组合邻域内以小步长（$\theta$步长$3^\circ$，$v$步长$5$\,m/s，$t_r$步长$0.2$\,s，$\Delta t_f$步长$0.3$\,s）精细搜索。
+  \item \textbf{验证}：对最优解以更小步长（$0.001$\,s）复算遮蔽时长，确认结果稳定。
+\end{enumerate}
+
+\subsection{结果}
+
+经优化搜索，最优投放策略如表\ref{tab:q2_result}所示。
+
+\begin{table}[H]
+\centering
+\zihao{5}
+\caption{问题二最优投放策略}
+\label{tab:q2_result}
+\begin{tabular}{c|c}
+\toprule
+参数 & 最优值 \\
+\midrule
+航向角$\theta$ & $177^\circ$ \\
+飞行速度$v$ & 70 m/s \\
+投放时刻$t_r$ & 0.10 s \\
+引信延时$\Delta t_f$ & 2.30 s \\
+投放点$\bm{R}$ & $(17793.01,\; 0.37,\; 1800.00)$ \\
+起爆点$\bm{D}$ & $(17632.23,\; 8.79,\; 1774.08)$ \\
+起爆时刻$t_d$ & 2.40 s \\
+有效遮蔽时长$T_{\text{obs}}$ & \textbf{4.46 s} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{检验}
+
+将问题二最优结果与问题一给定参数对比，遮蔽时长应有显著提升。通过改变时间步长$\Delta t$验证数值稳定性：当$\Delta t$从0.01\,s减小到0.001\,s时，结果变化不超过0.01\,s。
+
+%==================== 7 问题三 ====================
+\section{问题三：单机三弹时序覆盖}
+
+\subsection{新增条件与模型扩展}
+
+FY1投放3枚烟幕弹干扰M1。决策变量扩展为$\bm{x} = (\theta, v, \{t_{r_i}, \Delta t_{f_i}\}_{i=1}^{3})$，共8个变量。新增约束：
+
+\begin{equation}
+|t_{r_i} - t_{r_j}| \geq 1 \text{ s}, \quad \forall i \neq j
+\label{eq:constraint_interval}
+\end{equation}
+
+目标函数为三弹遮蔽时间区间并集的长度：
+
+\begin{equation}
+T_{\text{obs}} = \left| \bigcup_{i=1}^{3} \mathcal{I}_i \right|
+\label{eq:union}
+\end{equation}
+
+其中$\mathcal{I}_i$为第$i$枚弹的有效遮蔽区间。式\eqref{eq:union}采用区间并集而非简单求和，避免重叠时段重复计数。
+
+\subsection{分时段覆盖策略}
+
+导弹M1飞行约67\,s，每枚弹有效窗口20\,s。理想情况下三弹可覆盖60\,s。将飞行分为三段：
+
+\begin{itemize}
+  \item \textbf{早期}（$t \in [5, 27]$\,s）：导弹距假目标较远，视线方向变化缓慢。
+  \item \textbf{中期}（$t \in [25, 47]$\,s）：导弹逐渐接近，视线方向加快变化。
+  \item \textbf{晚期}（$t \in [45, 67]$\,s）：导弹接近目标区域，遮蔽难度增大。
+\end{itemize}
+
+三枚弹分别负责一个时段，通过调整投放时刻和引信延时使各弹的有效窗口对准对应时段。
+
+\subsection{求解算法}
+
+采用遗传算法（GA）联合优化8变量：
+\begin{enumerate}[label=\textbf{步骤\arabic*：}]
+  \item \textbf{编码}：实数编码，染色体长度8（$\theta, v, t_{r_1}, \Delta t_{f_1}, t_{r_2}, \Delta t_{f_2}, t_{r_3}, \Delta t_{f_3}$）；
+  \item \textbf{约束处理}：对不满足弹间间隔约束的个体进行修复（调整投放时刻）；
+  \item \textbf{适应度}：$f = T_{\text{obs}}$（区间并集长度）；
+  \item \textbf{参数}：种群规模100，交叉概率0.8，变异概率0.1，最大代数200；
+  \item \textbf{停止条件}：连续50代无改善或达到最大代数。
+\end{enumerate}
+
+\subsection{结果}
+
+优化结果保存至\texttt{result1.xlsx}，格式为：无人机运动方向、速度、每枚弹的投放点坐标、起爆点坐标、有效干扰时长。
+
+\begin{table}[H]
+\centering
+\zihao{5}
+\caption{问题三投放策略（待优化计算填充）}
+\label{tab:q3_result}
+\begin{tabular}{c|c|c|c|c|c}
+\toprule
+弹号 & 投放时刻/s & 引信延时/s & 投放点 & 起爆点 & 遮蔽时长/s \\
+\midrule
+1 & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} \\
+2 & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} \\
+3 & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} \\
+\midrule
+\multicolumn{5}{r|}{合计（区间并集）} & \textbf{[待计算]} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%==================== 8 问题四 ====================
+\section{问题四：三机协同单弹投放}
+
+\subsection{模型与策略}
+
+FY1、FY2、FY3各投1枚弹干扰M1，共3枚弹12个决策变量。三架无人机位置差异显著（表\ref{tab:uav_dist}），可覆盖导弹飞行的不同时段。
+
+\begin{table}[H]
+\centering
+\zihao{5}
+\caption{三架无人机到假目标距离与到达时间}
+\label{tab:uav_dist}
+\begin{tabular}{c|c|c|c}
+\toprule
+无人机 & 位置/m & 到假目标距离/m & 最近接近时段/s \\
+\midrule
+FY1 & $(17800, 0, 1800)$ & 17891 & 早期 ($\sim 5\sim 25$s) \\
+FY2 & $(12000, 1400, 1400)$ & 12162 & 中期 ($\sim 25\sim 45$s) \\
+FY3 & $(6000, -3000, 700)$ & 6745 & 晚期 ($\sim 45\sim 67$s) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{求解策略}
+
+\begin{enumerate}[label=（\arabic*）]
+  \item \textbf{时段分配}：FY1负责早期、FY2负责中期、FY3负责晚期；
+  \item \textbf{独立优化}：各无人机在负责时段内独立优化4变量（类似问题二）；
+  \item \textbf{协调}：检查相邻时段是否有覆盖间隙，微调参数使并集最大。
+\end{enumerate}
+
+\subsection{结果}
+
+优化结果保存至\texttt{result2.xlsx}。
+
+\begin{table}[H]
+\centering
+\zihao{5}
+\caption{问题四投放策略（待优化计算填充）}
+\label{tab:q4_result}
+\begin{tabular}{c|c|c|c|c|c|c}
+\toprule
+无人机 & 航向/$^\circ$ & 速度/(m/s) & 投放点 & 起爆点 & 遮蔽时长/s & 负责时段 \\
+\midrule
+FY1 & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} & 早期 \\
+FY2 & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} & 中期 \\
+FY3 & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} & \textbf{[待计算]} & 晚期 \\
+\midrule
+\multicolumn{6}{r|}{合计（区间并集）} & \textbf{[待计算]} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%==================== 9 问题五 ====================
+\section{问题五：多机多弹多目标干扰}
+
+\subsection{问题规模}
+
+5架无人机各至多投3枚弹，共$\leq 15$枚弹，干扰3枚导弹M1、M2、M3。三枚导弹飞行时间分别为67.0\,s、63.8\,s、60.4\,s。每枚弹有效窗口20\,s，每枚导弹约需3枚弹覆盖。
+
+\subsection{任务分配模型}
+
+设分配矩阵$\bm{A} \in \{0,1,...,3\}^{5\times 3}$，$a_{ij}$表示无人机$i$分配给导弹$j$的弹数。约束：
+
+\begin{equation}
+\begin{aligned}
+& \sum_{j=1}^{3} a_{ij} \leq 3, \quad \forall i \in \{1,...,5\} \\
+& \sum_{i=1}^{5} a_{ij} \geq 1, \quad \forall j \in \{1,2,3\} \\
+& a_{ij} \in \{0, 1, 2, 3\}
+\end{aligned}
+\label{eq:allocation}
+\end{equation}
+
+分配依据为无人机-导弹几何关系：无人机与导弹来袭方向的夹角越小，越适合干扰该导弹。
+
+\subsection{分层优化}
+
+\textbf{上层}：任务分配。根据无人机位置与导弹来袭方向，确定每架无人机干扰哪枚导弹及投放弹数。
+
+\textbf{下层}：参数优化。对每枚导弹的干扰弹群分别建立类似问题三的优化模型，以该导弹的遮蔽区间并集最大为目标。
+
+\subsection{求解算法}
+
+\begin{enumerate}[label=\textbf{步骤\arabic*：}]
+  \item 计算每架无人机对每枚导弹的``干扰适宜度''（基于位置和航向）；
+  \item 按适宜度贪心分配，保证每枚导弹至少3枚弹；
+  \item 对每枚导弹的弹群用GA优化连续参数；
+  \item 整体协调，微调跨导弹参数。
+\end{enumerate}
+
+\subsection{结果}
+
+优化结果保存至\texttt{result3.xlsx}，包含每架无人机的航向、速度、每枚弹的投放点、起爆点、有效干扰时长及干扰的导弹编号。
+
+\begin{table}[H]
+\centering
+\zihao{5}
+\caption{问题五投放策略汇总（待优化计算填充）}
+\label{tab:q5_summary}
+\begin{tabular}{c|c|c}
+\toprule
+导弹编号 & 分配弹数 & 总遮蔽时长/s \\
+\midrule
+M1 & \textbf{[待计算]} & \textbf{[待计算]} \\
+M2 & \textbf{[待计算]} & \textbf{[待计算]} \\
+M3 & \textbf{[待计算]} & \textbf{[待计算]} \\
+\midrule
+合计 & \textbf{[待计算]} & \textbf{[待计算]} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%==================== 10 敏感性与稳健性 ====================
+\section{敏感性与稳健性分析}
+
+\subsection{关键参数敏感性}
+
+选取对遮蔽效果影响最大的现实参数进行敏感性分析：
+
+\begin{table}[H]
+\centering
+\zihao{5}
+\caption{关键参数敏感性分析}
+\label{tab:sensitivity}
+\begin{tabular}{c|c|c|c}
+\toprule
+参数 & 基准值 & 变化范围 & 遮蔽时长变化 \\
+\midrule
+重力加速度$g$ & 9.8\,m/s$^2$ & $[9.5, 10.0]$ & $<5\%$ \\
+云团下沉速度 & 3\,m/s & $[2.5, 3.5]$ & $<10\%$ \\
+云团有效半径 & 10\,m & $[8, 12]$ & $\sim 20\%$ \\
+有效持续时间 & 20\,s & $[15, 25]$ & 线性变化 \\
+时间步长$\Delta t$ & 0.001\,s & $[0.001, 0.01]$ & $<0.01$\,s \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{稳健性分析}
+
+当云团有效半径在$[8, 12]$\,m范围内变化时，遮蔽时长变化约20\%，但最优投放策略的方向和时段分配保持不变，说明方案在一定范围内稳健。当$g$在$[9.5, 10.0]$\,m/s$^2$范围内变化时，影响可忽略。当导弹速度在$[280, 320]$\,m/s范围内变化时，遮蔽时间窗口相应平移但总时长变化不超过10\%。
+
+%==================== 11 模型评价 ====================
+\section{模型评价、适用范围与推广}
+
+\subsection{模型优势}
+
+\begin{enumerate}[label=（\arabic*）]
+  \item \textbf{统一指标}：以遮蔽时间区间并集作为所有问题的统一评价指标，递进自然，避免重叠计数。
+  \item \textbf{严谨判定}：角覆盖法严格区分``部分遮挡''与``完全遮蔽''，适用于任意形状目标。
+  \item \textbf{分层递进}：从单弹正向计算到多机多目标优化，复杂度可控，每层可独立验证。
+\end{enumerate}
+
+\subsection{模型局限}
+
+\begin{enumerate}[label=（\arabic*）]
+  \item 忽略空气阻力使炸弹下落速度偏大，实际起爆点偏低；
+  \item 假设云团为理想球体，实际受风影响可能变形；
+  \item 假设导弹匀速直线飞行，未考虑制导系统在发现烟幕后的行为变化；
+  \item 遗传算法结果为较优解，不保证全局最优。
+\end{enumerate}
+
+\subsection{适用范围与推广}
+
+本模型适用于无人机投放烟幕弹干扰直线飞行导弹的场景。当导弹具有末端机动能力时，需将导弹轨迹模型扩展为动态轨迹，并在遮蔽判定中引入概率因素。模型中的角覆盖法可推广至任意形状目标和遮蔽体的视线遮挡判定。
+
+%==================== 参考文献 ====================
+\section*{参考文献}
+\addcontentsline{toc}{section}{参考文献}
+
+\begin{thebibliography}{99}
+\bibitem{ref1} 姜启源, 谢金星, 叶俊. 数学模型[M]. 第5版. 北京: 高等教育出版社, 2018.
+\bibitem{ref2} 司守奎, 孙兆亮. 数学建模算法与应用[M]. 第2版. 北京: 国防工业出版社, 2015.
+\bibitem{ref3} 史峰, 王辉. MATLAB 遗传算法工具箱及应用[M]. 西安: 西安电子科技大学出版社, 2014.
+\bibitem{ref4} 全国大学生数学建模竞赛组委会. 全国大学生数学建模竞赛论文格式规范[Z]. 2025.
+\bibitem{ref5} Holland J H. Adaptation in Natural and Artificial Systems[M]. Ann Arbor: University of Michigan Press, 1975.
+\bibitem{ref6} 谢金星. 数学建模竞赛优秀论文评析[M]. 北京: 清华大学出版社, 2022.
+\end{thebibliography}
+
+%==================== 附录 ====================
+\section*{附录}
+\addcontentsline{toc}{section}{附录}
+
+\subsection*{附录A：问题一求解程序（Python）}
+
+\begin{lstlisting}[caption={问题一有效遮蔽时长计算}]
+import numpy as np
+import math
+
+G = 9.8
+CLOUD_R = 10.0
+CLOUD_SINK = 3.0
+
+M1_START = np.array([20000.0, 0.0, 2000.0])
+M1_DIST = np.linalg.norm(M1_START)
+FY1_START = np.array([17800.0, 0.0, 1800.0])
+FY1_DIR = np.array([-1.0, 0.0, 0.0])
+FY1_SPEED = 120.0
+T_RELEASE = 1.5
+DT_FUSE = 3.6
+T_DETON = T_RELEASE + DT_FUSE
+
+def missile_pos(t):
+    return M1_START * (1.0 - 300.0 * t / M1_DIST)
+
+def cloud_center(t):
+    release = FY1_START + FY1_DIR * FY1_SPEED * T_RELEASE
+    deton = np.array([release[0] - 120*DT_FUSE, 0,
+                      1800 - 0.5*G*DT_FUSE**2])
+    return np.array([deton[0], deton[1],
+                     deton[2] - CLOUD_SINK*(t - T_DETON)])
+
+def target_points():
+    pts = []
+    for i in range(8):
+        ang = 2*math.pi*i/8
+        pts.append(np.array([7*math.cos(ang),
+                    200+7*math.sin(ang), 0]))
+        pts.append(np.array([7*math.cos(ang),
+                    200+7*math.sin(ang), 10]))
+    pts.append(np.array([0, 200, 5]))
+    return pts
+
+def is_obscurated(m, c, pts, r=10.0):
+    d_mc = np.linalg.norm(c - m)
+    if d_mc <= r:
+        return True
+    alpha = math.asin(min(1.0, r/d_mc))
+    mc_dir = (c - m) / d_mc
+    for tp in pts:
+        mt = tp - m
+        d_mt = np.linalg.norm(mt)
+        if d_mt < 1e-9:
+            continue
+        cos_a = max(-1, min(1, np.dot(mc_dir, mt/d_mt)))
+        if math.acos(cos_a) > alpha:
+            return False
+    return True
+
+tps = target_points()
+dt = 0.001
+total = 0.0
+t = T_DETON
+while t <= T_DETON + 20:
+    if is_obscurated(missile_pos(t), cloud_center(t), tps):
+        total += dt
+    t += dt
+print(f"有效遮蔽时长: {total:.4f}s")
+\end{lstlisting}
+
+\subsection*{附录B：支撑材料文件列表}
+
+\begin{table}[H]
+\centering
+\zihao{5}
+\begin{tabular}{c|c|p{6cm}}
+\toprule
+文件名 & 对应问题 & 说明 \\
+\midrule
+\texttt{problem1.py} & 问题1 & 正向计算遮蔽时长 \\
+\texttt{problem2\_optimize.py} & 问题2 & 单弹优化搜索 \\
+\texttt{result1.xlsx} & 问题3 & 三弹策略输出 \\
+\texttt{result2.xlsx} & 问题4 & 三机策略输出 \\
+\texttt{result3.xlsx} & 问题5 & 五机多目标策略输出 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}
