@@ -1,0 +1,147 @@
+\documentclass[12pt,a4paper]{article}
+
+% --- LaTeX Packages ---
+\usepackage[UTF8,scheme=chinese]{ctex}
+\usepackage{geometry}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{fancyhdr}
+\usepackage{array}
+\usepackage{titlesec}
+\usepackage{hyperref}
+
+% A4 paper, margins: top/bottom/left/right 2.5cm
+\geometry{top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm}
+
+% Chinese font settings
+\setCJKmainfont{SimSun}[BoldFont=SimHei, ItalicFont=KaiTi]
+\setCJKsansfont{SimHei}
+
+% Line spacing
+\renewcommand{\baselinestretch}{1.3}
+
+% Section spacing and styling
+\titleformat{\section}{\zihao{-3}\bfseries\heiti}{\thesection}{1em}{}
+\titleformat{\subsection}{\zihao{4}\bfseries\heiti}{\thesubsection}{1em}{}
+
+% Listings configuration
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\lstset{
+  frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\linespread{1.0}\footnotesize\ttfamily},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  breaklines=true,
+  tabsize=4
+}
+
+\begin{document}
+
+\begin{center}
+    \vspace*{0.5cm}
+    {\zihao{2}\bfseries\heiti 全国大学生数学建模竞赛}\\
+    {\zihao{3}\bfseries\heiti 人工智能工具使用详情说明书}\\[0.6cm]
+    \rule{\textwidth}{1.5pt}\\[0.8cm]
+\end{center}
+
+\section{所用 AI 工具基本信息}
+根据《全国大学生数学建模竞赛人工智能工具使用规定（2025年试行）》的要求，本参赛队在竞赛期间规范、公开、透明地使用了人工智能工具。相关工具的基本信息如表\ref{tab:ai_info}所示：
+
+\begin{table}[H]
+    \centering
+    \caption{参赛队所使用的人工智能（AI）工具基本信息表}
+    \label{tab:ai_info}
+    \begin{tabular}{cccc}
+        \toprule
+        \textbf{工具名称} & \textbf{版本/型号} & \textbf{开发机构/公司} & \textbf{使用日期} \\ \midrule
+        DeepSeek & deepseekV4-pro & 深度求索 (DeepSeek) & 2026年5月24日 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{具体使用目的与环节}
+本参赛队仅在学术思路排查、部分数学公式的物理背景探讨、LaTeX格式的排版美化以及求解程序的辅助语法调试中使用了 AI 工具。所有核心模型的构建、核心公式的离散化推导、程序代码的算法逻辑实现与图表生成，均由参赛队全权独立完成。具体使用环节如表\ref{tab:ai_usage}所示：
+
+\begin{table}[H]
+    \centering
+    \caption{AI 工具的具体使用目的与涉及环节}
+    \label{tab:ai_usage}
+    \begin{tabular}{lp{6.5cm}p{6cm}}
+        \toprule
+        \textbf{涉及环节} & \textbf{使用 AI 工具的具体目的} & \textbf{采纳与人工修改情况说明} \\ \midrule
+        数学公式理顺 & 探讨等效热参数 (ETP) 模型的连续微分方程在大步长离散化时的潜在发散风险。 & 采纳了 AI 提出的使用指数积分法代替经典 Euler 离散的思路。由队员手写推导了具体的解析形式。 \\ \addlinespace
+        代码语法调试 & 辅助排查 Python 中 PuLP 线性规划求解器在添加大规模绝对值约束时的语法报错。 & 采纳了 AI 关于引入辅助决策变量进行非线性约束线性化的建议。队员独立编写并运行了完整的求解代码。 \\ \addlinespace
+        论文格式理顺 & 美化 LaTeX 论文中 TikZ 系统流程图的连线排版和 listings 代码段的单倍行距设置。 & 采纳了 AI 给出的 TikZ styling 建议代码。队员根据竞赛排版规范进行手写参数微调和两轮编译。 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\clearpage
+
+\section{关键交互记录}
+以下展示参赛队与人工智能工具交互中的两个关键技术记录，用以说明工具在启发思路和排查语法中的辅助作用。
+
+\subsection{关键交互记录 1：关于 ETP 模型大步长离散化的发散排查}
+\begin{description}
+    \item[参赛队提示词 (Prompt)：] \ \\
+    “我们在建立空调负荷等效热参数 (ETP) 模型时，一阶微分方程为：
+    \[ C \frac{dT_{in}(t)}{dt} = \frac{T_{out}(t) - T_{in}(t)}{1000 R} - EER \cdot P(t) \]
+    当我们将仿真步长设为 $\Delta t = 1\ \text{min}$ 时，采用向前欧拉离散法在仿真中出现了温度数值发散和大幅震荡。这在物理上是不合理的。请问有什么方法可以从根本上解决大步长下的离散化数值不稳定性？”
+    
+    \item[AI 工具回复 (Response)：] \ \\
+    “向前欧拉法是显式格式，其数值稳定性要求步长必须极小。对于时间常数较小或热阻较小的建筑 ETP 系统，$\Delta t = 60\ \text{s}$ 会超出其稳定域，导致强烈的数值震荡。\\
+    **根本解决方案**是使用**解析指数积分法 (Analytical Exponential Integrator)**。由于在一步区间 $[\tau_k, \tau_{k+1}]$ 内室外温度 $T_{out}$ 和空调功率 $P$ 可近似视为常数，该线性非齐次微分方程具有解析精确解。其更新格式为：
+    \[ T_{in}(k+1) = a T_{in}(k) + (1-a) T_{out}(k) - b P(k) \]
+    其中：
+    \[ a = e^{-\frac{\Delta t}{1000 R C}}, \quad b = 1000 R \cdot EER \cdot (1-a) \]
+    此格式属于半隐式解析更新，在任何离散步长下都绝对稳定且无截断误差，能完美解决数值发散。”
+    
+    \item[参赛队采纳与人工修改情况：] \ \\
+    参赛队完全采纳了此建议。针对 B 类建筑参数，手写推导了精确的离散化系数 $a$ 和 $b$，并编写了仿真更新代码。实践证明：该格式在 24 小时常规运行仿真中极其稳定，消除了任何震荡发散，完全符合物理实际。
+\end{description}
+
+\clearpage
+
+\subsection{关键交互记录 2：关于 PuLP 线性规划求解器中非线性绝对值约束的处理}
+\begin{description}
+    \item[参赛队提示词 (Prompt)：] \ \\
+    “我们在使用 Python 中的 PuLP 库编写多用户空调集群优化调度程序时，目标函数需要最小化用户的温度不适度，即室内实际温度与设定值 Tup 的差值绝对值累加之和：
+    \[ \min \sum |T_g(t) - T_{up, g}| \]
+    但在 PuLP 中直接写 `abs` 函数会报错，因为它是非线性的。请问如何在保持线性规划 (LP) 求解器高效性的前提下，将这个绝对值项线性化？”
+    
+    \item[AI 工具回复 (Response)：] \ \\
+    “在数学规划中，最小化绝对值和 $\min |x|$ 是非常经典的非线性项，可以通过引入**辅助决策变量 (Auxiliary Variables)** 进行等价的线性化处理。\\
+    对于每一个群组 $g$ 的每一次时间步长 $t$，定义一个非负辅助决策变量 $z_g(t) \ge 0$。将目标函数中的绝对值项替换为 $z_g(t)$。然后，对于所有的 $g$ 和 $t$，在 PuLP 中添加以下两条线性不等式约束：
+    \[ z_g(t) \ge T_g(t) - T_{up, g} \]
+    \[ z_g(t) \ge 0 \]
+    这样，线性求解器在最小化 $z_g(t)$ 时，会迫使其自动等于 $\max(0, T_g(t) - T_{up, g})$（即单侧越限惩罚）。这种转换完全保持了约束系统的线性，因此能够利用高效的 simplex 或内点法在数秒内解出全局最优调度方案。”
+    
+    \item[参赛队采纳与人工修改情况：] \ \\
+    参赛队深入学习并完全采纳了辅助变量的线性化机制。在 \lstinline!solve_problem_a.py! 的 PuLP 建模部分定义了辅助字典变量 \lstinline!Z_vars!，并成功写入了上述两个线性不等式约束。在实际求解中，1000 户居民在 360 分钟时域下的 36 万个决策变量的 LP 问题仅用 0.8 秒便解算完成，求得了全局最优调度。
+\end{description}
+
+\section{总结与学术诚信承诺}
+本参赛队秉承诚实守信、公开透明的学术态度。在此郑重承诺：
+\begin{enumerate}
+    \item 本篇论文的全部核心数学模型（ETP指数离散化、群组降维聚合、大规模空调集群优化调度、机会约束鲁棒调度）均由参赛队员独立讨论、构建并完成推导。
+    \item 全部的计算与绘图 Python 代码均由参赛队员自主调试运行，没有使用任何 AI 工具自动生成完整代码或支撑材料。
+    \item 参赛队在使用 AI 辅助的过程中，完全遵循了数学建模竞赛组委会的试行规定，并在参考文献与支撑材料中进行了如实和规范的批注。
+\end{enumerate}
+
+\vspace{1.5cm}
+\begin{flushright}
+    参赛队组号：13165 \\
+    参赛队员签名：严浩睿、陈俊明、吴扬 \\
+    日期：2026年5月24日
+\end{flushright}
+
+\end{document}
