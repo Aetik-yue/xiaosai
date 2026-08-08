@@ -5,6 +5,9 @@
 \setCJKsansfont{SimHei}
 \setCJKmonofont{FangSong}
 
+% 中文编号支持
+\usepackage{zhnumber}
+
 \providecommand{\CJKrmdefault}{rm}
 \providecommand{\CJKsfdefault}{sf}
 \providecommand{\CJKttdefault}{tt}
@@ -49,6 +52,9 @@
 \author{}
 \date{}
 
+\titleformat{\section}{\zihao{4}\bfseries\heiti}{}{0em}{}
+\titleformat{\subsection}{\zihao{-4}\bfseries\heiti}{}{0em}{}
+\titleformat{\subsubsection}{\zihao{-4}\bfseries\heiti}{}{0em}{}
 \begin{document}
 \maketitle
 
@@ -74,7 +80,7 @@
 \newpage
 
 % ==================== 一、问题重述 ====================
-\section{问题重述}
+\section{一、问题重述}
 
 \subsection{问题背景}
 
@@ -124,7 +130,7 @@ $FY_5$ & $(13000, -2000, 1300)$ & 无人机 \\
 \end{itemize}
 
 % ==================== 二、问题分析 ====================
-\section{问题分析}
+\section{二、问题分析}
 
 \subsection{总体思路}
 
@@ -152,7 +158,7 @@ $FY_5$ & $(13000, -2000, 1300)$ & 无人机 \\
 \textbf{问题五}为多对多场景，需同时优化任务分配与运动参数，属于混合整数非线性规划（MINLP）。
 
 % ==================== 三、模型假设 ====================
-\section{模型假设}
+\section{三、模型假设}
 
 \begin{enumerate}[nosep]
   \item 忽略空气阻力与气流影响，重力加速度$g = 9.8$\,m/s$^2$。
@@ -165,7 +171,7 @@ $FY_5$ & $(13000, -2000, 1300)$ & 无人机 \\
 \end{enumerate}
 
 % ==================== 四、符号说明 ====================
-\section{符号说明}
+\section{四、符号说明}
 
 \begin{table}[H]
 \centering
@@ -196,7 +202,7 @@ $T$ & 有效遮蔽时长 & s \\
 \end{table}
 
 % ==================== 五、模型建立 ====================
-\section{模型建立与求解}
+\section{五、模型建立与求解}
 
 \subsection{运动学模型}
 
@@ -605,7 +611,7 @@ $FY_5$ & 3.639 & 0.000 & 0.000 & 1 \\
 5架无人机的第2、3枚弹均无法形成额外有效遮蔽。该结论与先前分析一致：在航向锁定约束下，无人机沿固定方向匀速直线飞行，其轨迹与导弹$\to$真目标动态视线的几何交会存在唯一时刻窗口。第2、3枚弹沿相同方向投放，起爆点位于无人机飞行方向延伸线上，始终偏离已变更的视线位置，无法形成时间接力。因此每架机仅投入1枚弹即达最优，result3.xlsx中弹2、弹3的遮蔽时长记为0。
 
 % ==================== 六、灵敏度分析 ====================
-\section{灵敏度分析}
+\section{六、灵敏度分析}
 
 对问题二的最优解进行灵敏度分析，考察航向角$\theta$和飞行速度$v$对遮蔽时长的影响。
 
@@ -628,7 +634,7 @@ $FY_5$ & 3.639 & 0.000 & 0.000 & 1 \\
 多起点实验（图\ref{fig:multistart}）表明，10次随机起点的PSO最优值均在$4.45$\textasciitilde$4.58$\,s之间，标准差小于0.05\,s，说明算法收敛稳定，最优解具有可复现性。
 
 % ==================== 七、模型评价 ====================
-\section{模型评价与改进方向}
+\section{七、模型评价与改进方向}
 
 \subsection{模型优点}
 \begin{enumerate}[nosep]
@@ -644,6 +650,120 @@ $FY_5$ & 3.639 & 0.000 & 0.000 & 1 \\
   \item PSO优化结果依赖参数设置与初始解质量，可能陷入局部最优。
   \item 问题五的任务分配采用启发式规则，未做全局最优性证明。
 \end{enumerate}
+
+
+% ==================== 附录 ====================
+\appendix
+\section{核心代码}
+
+\subsection{运动学模型 (core.py)}
+
+\begin{lstlisting}
+import numpy as np
+
+G = 9.8
+R_SMOKE = 10.0
+V_MISSILE = 300.0
+V_SINK = 3.0
+
+TARGET_CENTER = np.array([0.0, 200.0, 0.0])
+TARGET_RADIUS = 7.0
+TARGET_HEIGHT = 10.0
+FAKE_TARGET = np.array([0.0, 0.0, 0.0])
+
+MISSILES = {
+    'M1': np.array([20000.0, 0.0, 2000.0]),
+    'M2': np.array([19000.0, 600.0, 2100.0]),
+    'M3': np.array([18000.0, -600.0, 1900.0]),
+}
+UAVS = {
+    'FY1': np.array([17800.0, 0.0, 1800.0]),
+    'FY2': np.array([12000.0, 1400.0, 1400.0]),
+    'FY3': np.array([6000.0, -3000.0, 700.0]),
+    'FY4': np.array([11000.0, 2000.0, 1800.0]),
+    'FY5': np.array([13000.0, -2000.0, 1300.0]),
+}
+
+def missile_pos(mid, t):
+    m0 = MISSILES[mid]
+    d = (FAKE_TARGET - m0) / np.linalg.norm(FAKE_TARGET - m0)
+    return m0 + V_MISSILE * t * d
+
+def uav_pos(uid, theta, v, t):
+    u0 = UAVS[uid]
+    d = np.array([np.cos(theta), np.sin(theta), 0.0])
+    return u0 + v * t * d
+
+def burst_point(uid, theta, v, t_rel, dt_fuse):
+    t_b = t_rel + dt_fuse
+    drop = uav_pos(uid, theta, v, t_rel)
+    d = np.array([np.cos(theta), np.sin(theta), 0.0])
+    bp = drop + v * dt_fuse * d
+    bp[2] -= 0.5 * G * dt_fuse ** 2
+    return bp, t_b
+\end{lstlisting}
+
+\subsection{遮蔽判定 (core.py)}
+
+\begin{lstlisting}
+def is_occluded(mid, cloud_pos, t, n_samples=360):
+    m_pos = missile_pos(mid, t)
+    mc = cloud_pos - m_pos
+    d = np.linalg.norm(mc)
+    if d <= R_SMOKE:
+        return True
+    alpha = np.arcsin(R_SMOKE / d)
+
+    phi = np.linspace(0, 2*np.pi, n_samples, endpoint=False)
+    for p in phi:
+        offset = TARGET_RADIUS * np.array([np.cos(p), np.sin(p), 0])
+        for center in [TARGET_CENTER, TARGET_CENTER+[0,0,TARGET_HEIGHT]]:
+            pt = center + offset
+            mp = pt - m_pos
+            mp_n = np.linalg.norm(mp)
+            if mp_n < 1e-10: continue
+            cos_b = np.dot(mp, mc) / (mp_n * d)
+            cos_b = np.clip(cos_b, -1, 1)
+            beta = np.arccos(cos_b)
+            if beta > beta_max:
+                beta_max = beta
+    return beta_max <= alpha
+\end{lstlisting}
+
+\subsection{PSO优化器 (optimizer.py)}
+
+\begin{lstlisting}
+def solve_q2(n_particles=30, n_iter=40, seed=42):
+    rng = np.random.RandomState(seed)
+    lb = np.array([0.0, 70.0, 0.0, 0.0])
+    ub = np.array([2*np.pi, 140.0, 10.0, 6.0])
+    pos = rng.uniform(lb, ub, (n_particles, 4))
+    pos[0] = [np.pi, 120.0, 1.5, 3.6]
+    vel = np.zeros((n_particles, 4))
+    pbest = pos.copy()
+
+    def fitness(x):
+        theta, v, tr, df = x
+        if v < 70 or v > 140: return 0.0
+        if UAVS['FY1'][2] - 4.9*df**2 < 0: return 0.0
+        T, _, _, _ = calc_time_fast('M1', 'FY1', theta, v, tr, df)
+        return T
+
+    pf = np.array([fitness(p) for p in pos])
+    gi = np.argmax(pf); gb, gf = pos[gi].copy(), pf[gi]
+
+    for it in range(n_iter):
+        r1 = rng.random((n_particles, 4))
+        r2 = rng.random((n_particles, 4))
+        vel = 0.7*vel + 1.5*r1*(pbest-pos) + 1.5*r2*(gb-pos)
+        pos = np.clip(pos+vel, lb, ub)
+        for i in range(n_particles):
+            f = fitness(pos[i])
+            if f > pf[i]: pf[i], pbest[i] = f, pos[i].copy()
+            if f > gf: gf, gb = f, pos[i].copy()
+
+    return gb, gf
+\end{lstlisting}
 
 \begin{thebibliography}{99}
 \bibitem{1} 2025年高教社杯全国大学生数学建模竞赛A题题目.
