@@ -15,6 +15,7 @@
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\graphicspath{{figures/}}
 \usepackage{float}
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows, positioning}
@@ -117,6 +118,13 @@
 \textbf{问题四}为3机协同，各机运动参数独立。核心是让三机烟幕团在空间上错开、时间上接力，避免遮蔽窗口重叠浪费。
 
 \textbf{问题五}为多对多场景，需同时优化任务分配（哪架机干扰哪枚导弹）与运动参数，属于混合整数非线性规划（MINLP）。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{fig_framework.png}
+\caption{三层模型体系与五问递进}
+\label{fig:framework}
+\end{figure}
 
 % ==================== 三、模型假设 ====================
 \section{模型假设}
@@ -285,6 +293,18 @@ T = \int_{t_b}^{t_b + 20} E(t) \, dt \approx \sum_{n=0}^{N-1} E(t_n) \cdot \Delt
 \bottomrule
 \end{tabular}
 \end{table}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig_q2_convergence.png}
+\caption{PSO\u7b97\u6cd5\u6536\u655b\u66f2\u7ebf}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig_q2_sensitivity.png}
+\caption{\u822a\u5411\u89d2 $\theta$ \u5bf9\u906e\u853d\u65f6\u95f4\u7684\u7075\u654f\u5ea6}
+\end{figure}
+
 
 遮蔽发生在$t \in [8.057, 9.449]$\,s区间。此时导弹$M_1$从$(17596, 0, 1759)$飞至$(17180, 0, 1718)$，烟幕云团从$z=1728$下沉至$z=1724$，云团恰好位于导弹与真目标之间的视线附近，形成有效遮蔽。
 
