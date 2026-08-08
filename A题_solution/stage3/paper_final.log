@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.11.26)  9 AUG 2026 01:04
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.11.26)  9 AUG 2026 01:08
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -737,8 +737,8 @@ misspelled it (e.g., `\hobx'), type `I' and the correct
 spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
-(./paper.aux)
-\openout1 = `paper.aux'.
+(./paper_final.aux)
+\openout1 = `paper_final.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 58.
 LaTeX Font Info:    ... okay on input line 58.
@@ -800,9 +800,9 @@ Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: hyperref package is loaded.
 Package caption Info: End \AtBeginDocument code.
 Package hyperref Info: Link coloring OFF on input line 58.
-(./paper.out) (./paper.out)
+(./paper_final.out) (./paper_final.out)
 \@outlinefile=\write3
-\openout3 = `paper.out'.
+\openout3 = `paper_final.out'.
 
 LaTeX Font Info:    Trying to load font information for U+msa on input line 70.
 
@@ -819,14 +819,11 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 
 [1
 
-] (./paper.toc)
+] (./paper_final.toc)
 \tf@toc=\write4
-\openout4 = `paper.toc'.
+\openout4 = `paper_final.toc'.
 
 
-
-
-LaTeX Warning: Reference `LastPage' on page 2 undefined on input line 104.
 
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
@@ -838,7 +835,13 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 [2]
 
 
-LaTeX Warning: Reference `LastPage' on page 3 undefined on input line 116.
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
+
+[3]
 
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
@@ -847,4 +850,77 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
 
-[3
+[4] 
+enddocument/afterlastpage (AED): lastpage setting LastPage.
+
+! LaTeX hooks Error: Missing \PopDefaultHookLabel.
+(hooks)              The label 'fontspec' was pushed but never popped.
+(hooks)              Something is wrong.
+
+Type <return> to continue.
+ ...                                              
+                                                  
+l.119 ^^I\end{document}
+                       
+
+LaTeX does not know anything more about this error, sorry.
+
+Try typing <return> to proceed.
+If that doesn't work, type X <return> to quit.
+
+
+
+! LaTeX hooks Error: Missing \PopDefaultHookLabel.
+(hooks)              The label 'xeCJK' was pushed but never popped.
+(hooks)              Something is wrong.
+
+Type <return> to continue.
+ ...                                              
+                                                  
+l.119 ^^I\end{document}
+                       
+
+LaTeX does not know anything more about this error, sorry.
+
+Try typing <return> to proceed.
+If that doesn't work, type X <return> to quit.
+
+
+
+! LaTeX hooks Error: Missing \PopDefaultHookLabel.
+(hooks)              The label 'ctex' was pushed but never popped. Something
+(hooks)              is wrong.
+
+Type <return> to continue.
+ ...                                              
+                                                  
+l.119 ^^I\end{document}
+                       
+
+LaTeX does not know anything more about this error, sorry.
+
+Try typing <return> to proceed.
+If that doesn't work, type X <return> to quit.
+
+
+(./paper_final.aux)
+ ***********
+LaTeX2e <2024-11-01> patch level 2
+L3 programming layer <2022/08/05>
+ ***********
+Package rerunfilecheck Info: File `paper_final.out' has not changed.
+(rerunfilecheck)             Checksum: 8835CC4925B1E4392298FD0184A266EA;792.
+ ) ) ) ) )
+(\end occurred when \ifx on line 4553 was incomplete)
+(\end occurred when \ifx on line 32 was incomplete)
+(\end occurred when \ifx on line 4 was incomplete) 
+Here is how much of TeX's memory you used:
+ 16509 strings out of 473832
+ 288488 string characters out of 5730403
+ 788517 words of memory out of 5000000
+ 39349 multiletter control sequences out of 15000+600000
+ 565006 words of font info for 65 fonts, out of 8000000 for 9000
+ 1348 hyphenation exceptions out of 8191
+ 120i,11n,123p,681b,377s stack positions out of 10000i,1000n,20000p,200000b,200000s
+
+Output written on paper_final.pdf (4 pages).

@@ -1,6 +1,16 @@
 \documentclass[12pt,a4paper]{article}
 
-\usepackage[UTF8,scheme=chinese]{ctex}
+\usepackage{xeCJK}
+\setCJKmainfont{SimSun}[BoldFont=SimHei, ItalicFont=KaiTi]
+\setCJKsansfont{SimHei}
+\setCJKmonofont{FangSong}
+
+% 修复xeCJK控制序列未定义问题
+\providecommand{\CJKrmdefault}{rm}
+\providecommand{\CJKsfdefault}{sf}
+\providecommand{\CJKttdefault}{tt}
+\providecommand{\CJKfamilydefault}{\CJKrmdefault}
+
 \usepackage{geometry}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
@@ -467,7 +477,25 @@ $M_3$ & 3.639 \\
 
 \subsubsection{多弹接力分析}
 
-在航向锁定约束下（无人机航向一旦确定不可调整），同一无人机的第2枚弹沿相同方向投放，起爆点位置差异有限，遮蔽窗口高度重叠，难以形成有效时间接力。因此本文每架无人机仅投放1枚弹，依靠多机协同实现时间接力。
+对每架无人机固定最优航向$\theta$与速度$v$，搜索第2、3枚弹的时序参数（$t_{rel,j}$与$\Delta t_j$，$j=2,3$）。结果如下：
+
+\begin{table}[H]
+\centering
+\caption{多弹接力搜索结果}
+\begin{tabular}{lcccc}
+\toprule
+无人机 & 弹1遮蔽(s) & 弹2增量(s) & 弹3增量(s) & 最终弹数 \\
+\midrule
+$FY_1$ & 4.578 & 0.000 & 0.000 & 1 \\
+$FY_2$ & 3.928 & 0.000 & 0.000 & 1 \\
+$FY_3$ & 3.003 & 0.000 & 0.000 & 1 \\
+$FY_4$ & 3.769 & 0.000 & 0.000 & 1 \\
+$FY_5$ & 3.639 & 0.000 & 0.000 & 1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+5架无人机的第2、3枚弹均无法形成额外有效遮蔽。该结论与先前分析一致：在航向锁定约束下，无人机沿固定方向匀速直线飞行，其轨迹与导弹$\to$真目标动态视线的几何交会存在唯一时刻窗口。第2、3枚弹沿相同方向投放，起爆点位于无人机飞行方向延伸线上，始终偏离已变更的视线位置，无法形成时间接力。因此每架机仅投入1枚弹即达最优，result3.xlsx中弹2、弹3的遮蔽时长记为0。
 
 \section{模型评价与改进方向}
 
