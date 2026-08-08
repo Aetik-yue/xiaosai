@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.11.26)  9 AUG 2026 03:14
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.11.26)  9 AUG 2026 03:29
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -2495,8 +2495,8 @@ such as text, \noindent, \makebox, etc.
 ! Undefined control sequence.
 <argument> \zihao 
                   {4}\bfseries \heiti 
-l.659 \section{核心代码}
-                    
+l.659 \section{完整求解代码}
+                      
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
 misspelled it (e.g., `\hobx'), type `I' and the correct
@@ -2506,8 +2506,8 @@ and I'll forget about whatever was undefined.
 ! Undefined control sequence.
 <argument> \zihao {4}\bfseries \heiti 
                                       
-l.659 \section{核心代码}
-                    
+l.659 \section{完整求解代码}
+                      
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
 misspelled it (e.g., `\hobx'), type `I' and the correct
@@ -2521,16 +2521,16 @@ See the titlesec package documentation for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.659 \section{核心代码}
-                    
+l.659 \section{完整求解代码}
+                      
 The <format> argument cannot contain horizontal material
 such as text, \noindent, \makebox, etc.
 
 ! Undefined control sequence.
 <argument> \zihao 
                   {-4}\bfseries \heiti 
-l.661 \subsection{运动学模型 (core.py)}
-                                  
+l.661 \subsection{A. core.py -- 运动学模型、遮蔽判定、基础函数}
+                                                
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
 misspelled it (e.g., `\hobx'), type `I' and the correct
@@ -2540,8 +2540,8 @@ and I'll forget about whatever was undefined.
 ! Undefined control sequence.
 <argument> \zihao {-4}\bfseries \heiti 
                                        
-l.661 \subsection{运动学模型 (core.py)}
-                                  
+l.661 \subsection{A. core.py -- 运动学模型、遮蔽判定、基础函数}
+                                                
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
 misspelled it (e.g., `\hobx'), type `I' and the correct
@@ -2555,11 +2555,13 @@ See the titlesec package documentation for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.661 \subsection{运动学模型 (core.py)}
-                                  
+l.661 \subsection{A. core.py -- 运动学模型、遮蔽判定、基础函数}
+                                                
 The <format> argument cannot contain horizontal material
 such as text, \noindent, \makebox, etc.
 
+Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
+nput line 662.
 
 Package fontspec Info: 
 (fontspec)             Could not resolve font "FangSong/BI" (it probably
@@ -2591,82 +2593,485 @@ Package fontspec Info:
 [20]
 
 [21]
-! Undefined control sequence.
-<argument> \zihao 
-                  {-4}\bfseries \heiti 
-l.708 \subsection{遮蔽判定 (core.py)}
-                                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Undefined control sequence.
-<argument> \zihao {-4}\bfseries \heiti 
-                                       
-l.708 \subsection{遮蔽判定 (core.py)}
-                                 
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-
-! Package titlesec Error: Entered in horizontal mode.
-
-See the titlesec package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.708 \subsection{遮蔽判定 (core.py)}
-                                 
-The <format> argument cannot contain horizontal material
-such as text, \noindent, \makebox, etc.
-
-! Undefined control sequence.
-<argument> \zihao 
-                  {-4}\bfseries \heiti 
-l.735 \subsection{PSO优化器 (optimizer.py)}
-                                        
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Undefined control sequence.
-<argument> \zihao {-4}\bfseries \heiti 
-                                       
-l.735 \subsection{PSO优化器 (optimizer.py)}
-                                        
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-
-! Package titlesec Error: Entered in horizontal mode.
-
-See the titlesec package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.735 \subsection{PSO优化器 (optimizer.py)}
-                                        
-The <format> argument cannot contain horizontal material
-such as text, \noindent, \makebox, etc.
-
-
 
 [22]
+
+[23]
+
+[24]
+
+[25]
+
+[26]
+! Undefined control sequence.
+<argument> \zihao 
+                  {-4}\bfseries \heiti 
+l.890 ...{B. optimizer.py -- 粒子群优化、多弹并集、Q1验证、Q2求解}
+                                                  
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<argument> \zihao {-4}\bfseries \heiti 
+                                       
+l.890 ...{B. optimizer.py -- 粒子群优化、多弹并集、Q1验证、Q2求解}
+                                                  
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+! Package titlesec Error: Entered in horizontal mode.
+
+See the titlesec package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.890 ...{B. optimizer.py -- 粒子群优化、多弹并集、Q1验证、Q2求解}
+                                                  
+The <format> argument cannot contain horizontal material
+such as text, \noindent, \makebox, etc.
+
+
+
+[27]
+
+[28]
+
+[29]
+
+[30]
+
+[31]
+! Undefined control sequence.
+<argument> \zihao 
+                  {-4}\bfseries \heiti 
+l.1088 ...{C. solve_fix.py -- Q3三弹接力、Q4三机协同、Q5多对多}
+                                                  
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<argument> \zihao {-4}\bfseries \heiti 
+                                       
+l.1088 ...{C. solve_fix.py -- Q3三弹接力、Q4三机协同、Q5多对多}
+                                                  
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+! Package titlesec Error: Entered in horizontal mode.
+
+See the titlesec package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.1088 ...{C. solve_fix.py -- Q3三弹接力、Q4三机协同、Q5多对多}
+                                                  
+The <format> argument cannot contain horizontal material
+such as text, \noindent, \makebox, etc.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1088 ...{C. solve_fix.py -- Q3三弹接力、Q4三机协同、Q5多对多}
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+\ttlh@hang ...ngindent \wd \z@ \box \z@ \fi #4{#8}
+                                                  \kern \z@ \ttl@strut \@@pa...
+l.1088 ...{C. solve_fix.py -- Q3三弹接力、Q4三机协同、Q5多对多}
+                                                  
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1088 ...{C. solve_fix.py -- Q3三弹接力、Q4三机协同、Q5多对多}
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+Missing character: There is no 三 (U+4E09) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 弹 (U+5F39) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 接 (U+63A5) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 力 (U+529B) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 、 (U+3001) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 三 (U+4E09) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 机 (U+673A) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 协 (U+534F) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 同 (U+540C) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 、 (U+3001) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 多 (U+591A) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 对 (U+5BF9) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 多 (U+591A) in font [lmroman12-regular]:mapping=t
+ex-text;!
+! Missing } inserted.
+<inserted text> 
+                }
+l.1088 ...{C. solve_fix.py -- Q3三弹接力、Q4三机协同、Q5多对多}
+                                                  
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `subscript' on input line 1088.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1089 ...guage=Python, caption={C. solve_fix.py}]
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1089 ...guage=Python, caption={C. solve_fix.py}]
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1089 ...guage=Python, caption={C. solve_fix.py}]
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1089 ...guage=Python, caption={C. solve_fix.py}]
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+
+
+[32]
+
+[33]
+Missing character: There is no θ (U+03B8) in font [lmmono10-regular]:!
+Missing character: There is no θ (U+03B8) in font [lmmono10-regular]:!
+
+
+[34]
+
+[35]
+Missing character: There is no θ (U+03B8) in font [lmmono10-regular]:!
+! Undefined control sequence.
+<argument> \zihao 
+                  {-4}\bfseries \heiti 
+l.1241 ...section{D. fy4_inverse.py -- FY4逆向运动学搜索}
+                                                  
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<argument> \zihao {-4}\bfseries \heiti 
+                                       
+l.1241 ...section{D. fy4_inverse.py -- FY4逆向运动学搜索}
+                                                  
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+! Package titlesec Error: Entered in horizontal mode.
+
+See the titlesec package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.1241 ...section{D. fy4_inverse.py -- FY4逆向运动学搜索}
+                                                  
+The <format> argument cannot contain horizontal material
+such as text, \noindent, \makebox, etc.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1241 ...section{D. fy4_inverse.py -- FY4逆向运动学搜索}
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+\ttlh@hang ...ngindent \wd \z@ \box \z@ \fi #4{#8}
+                                                  \kern \z@ \ttl@strut \@@pa...
+l.1241 ...section{D. fy4_inverse.py -- FY4逆向运动学搜索}
+                                                  
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1241 ...section{D. fy4_inverse.py -- FY4逆向运动学搜索}
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+Missing character: There is no 逆 (U+9006) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 向 (U+5411) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 运 (U+8FD0) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 动 (U+52A8) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 学 (U+5B66) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 搜 (U+641C) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 索 (U+7D22) in font [lmroman12-regular]:mapping=t
+ex-text;!
+! Missing } inserted.
+<inserted text> 
+                }
+l.1241 ...section{D. fy4_inverse.py -- FY4逆向运动学搜索}
+                                                  
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `subscript' on input line 1241.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1242 ...age=Python, caption={D. fy4_inverse.py}]
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1242 ...age=Python, caption={D. fy4_inverse.py}]
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1242 ...age=Python, caption={D. fy4_inverse.py}]
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1242 ...age=Python, caption={D. fy4_inverse.py}]
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+
+
+[36]
+
+[37]
+Missing character: There is no θ (U+03B8) in font [lmmono10-regular]:!
+
+
+[38]
+Missing character: There is no θ (U+03B8) in font [lmmono10-regular]:!
+
+
+[39]
+Missing character: There is no θ (U+03B8) in font [lmmono10-regular]:!
+! Undefined control sequence.
+<argument> \zihao 
+                  {-4}\bfseries \heiti 
+l.1362 ...on{E. update_q5.py -- Q5结果整合与result文件输出}
+                                                  
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<argument> \zihao {-4}\bfseries \heiti 
+                                       
+l.1362 ...on{E. update_q5.py -- Q5结果整合与result文件输出}
+                                                  
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+! Package titlesec Error: Entered in horizontal mode.
+
+See the titlesec package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.1362 ...on{E. update_q5.py -- Q5结果整合与result文件输出}
+                                                  
+The <format> argument cannot contain horizontal material
+such as text, \noindent, \makebox, etc.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1362 ...on{E. update_q5.py -- Q5结果整合与result文件输出}
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+\ttlh@hang ...ngindent \wd \z@ \box \z@ \fi #4{#8}
+                                                  \kern \z@ \ttl@strut \@@pa...
+l.1362 ...on{E. update_q5.py -- Q5结果整合与result文件输出}
+                                                  
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1362 ...on{E. update_q5.py -- Q5结果整合与result文件输出}
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+Missing character: There is no 结 (U+7ED3) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 果 (U+679C) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 整 (U+6574) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 合 (U+5408) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 与 (U+4E0E) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 文 (U+6587) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 件 (U+4EF6) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 输 (U+8F93) in font [lmroman12-regular]:mapping=t
+ex-text;!
+Missing character: There is no 出 (U+51FA) in font [lmroman12-regular]:mapping=t
+ex-text;!
+! Missing } inserted.
+<inserted text> 
+                }
+l.1362 ...on{E. update_q5.py -- Q5结果整合与result文件输出}
+                                                  
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `subscript' on input line 1362.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1363 ...guage=Python, caption={E. update_q5.py}]
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1363 ...guage=Python, caption={E. update_q5.py}]
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1363 ...guage=Python, caption={E. update_q5.py}]
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1363 ...guage=Python, caption={E. update_q5.py}]
+                                                  
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+Missing character: There is no θ (U+03B8) in font [lmmono10-regular]:!
+
+
+[40]
+Missing character: There is no θ (U+03B8) in font [lmmono10-regular]:!
+
+
+[41]
+
+[42]
 ! Undefined control sequence.
 <argument> \zihao 
                   {4}\bfseries \heiti 
-l.770 \begin{thebibliography}{99}
-                                 
+l.1464 \begin{thebibliography}{99}
+                                  
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
 misspelled it (e.g., `\hobx'), type `I' and the correct
@@ -2676,8 +3081,8 @@ and I'll forget about whatever was undefined.
 ! Undefined control sequence.
 <argument> \zihao {4}\bfseries \heiti 
                                       
-l.770 \begin{thebibliography}{99}
-                                 
+l.1464 \begin{thebibliography}{99}
+                                  
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
 misspelled it (e.g., `\hobx'), type `I' and the correct
@@ -2691,30 +3096,28 @@ See the titlesec package documentation for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.770 \begin{thebibliography}{99}
-                                 
+l.1464 \begin{thebibliography}{99}
+                                  
 The <format> argument cannot contain horizontal material
 such as text, \noindent, \makebox, etc.
 
 
 
-[23]
-
-[24] (build/paper_v4.aux)
+[43] (build/paper_v4.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2022/08/05>
  ***********
 Package rerunfilecheck Info: File `paper_v4.out' has not changed.
-(rerunfilecheck)             Checksum: 0C77886FC0A41F36B39C7C49F8FA68FA;5746.
+(rerunfilecheck)             Checksum: 8C6AE543A7DF62EA02E5BAC59D174FB5;6632.
  ) 
 Here is how much of TeX's memory you used:
- 19108 strings out of 473832
- 389444 string characters out of 5730403
- 1143404 words of memory out of 5000000
- 41912 multiletter control sequences out of 15000+600000
- 568811 words of font info for 107 fonts, out of 8000000 for 9000
+ 19322 strings out of 473832
+ 395089 string characters out of 5730403
+ 1236404 words of memory out of 5000000
+ 42125 multiletter control sequences out of 15000+600000
+ 568819 words of font info for 108 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 73i,14n,95p,387b,1904s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 73i,14n,95p,387b,1977s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on build/paper_v4.pdf (24 pages).
+Output written on build/paper_v4.pdf (43 pages).

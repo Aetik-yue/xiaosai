@@ -656,28 +656,35 @@ $FY_5$ & 3.639 & 0.000 & 0.000 & 1 \\
 
 % ==================== 附录 ====================
 \appendix
-\section{核心代码}
+\section{完整求解代码}
 
-\subsection{运动学模型 (core.py)}
-
-\begin{lstlisting}
+\subsection{A. core.py -- 运动学模型、遮蔽判定、基础函数}
+\begin{lstlisting}[language=Python, caption={A. core.py}]
 import numpy as np
+from scipy.optimize import minimize_scalar
 
-G = 9.8
-R_SMOKE = 10.0
-V_MISSILE = 300.0
-V_SINK = 3.0
+G = 9.8  # 重力加速度
+R_SMOKE = 10.0  # 烟幕云团半径(m)
+V_MISSILE = 300.0  # 导弹速度(m/s)
+V_SINK = 3.0  # 云团下沉速度(m/s)
+EFFECTIVE_WINDOW = 20.0  # 云团有效时间(s)
 
-TARGET_CENTER = np.array([0.0, 200.0, 0.0])
-TARGET_RADIUS = 7.0
-TARGET_HEIGHT = 10.0
+# 真目标圆柱参数
+TARGET_CENTER = np.array([0.0, 200.0, 0.0])  # 下底面圆心
+TARGET_RADIUS = 7.0  # 圆柱半径
+TARGET_HEIGHT = 10.0  # 圆柱高度
+
+# 假目标(原点)
 FAKE_TARGET = np.array([0.0, 0.0, 0.0])
 
+# 导弹初始位置
 MISSILES = {
     'M1': np.array([20000.0, 0.0, 2000.0]),
     'M2': np.array([19000.0, 600.0, 2100.0]),
     'M3': np.array([18000.0, -600.0, 1900.0]),
 }
+
+# 无人机初始位置
 UAVS = {
     'FY1': np.array([17800.0, 0.0, 1800.0]),
     'FY2': np.array([12000.0, 1400.0, 1400.0]),
@@ -686,85 +693,772 @@ UAVS = {
     'FY5': np.array([13000.0, -2000.0, 1300.0]),
 }
 
-def missile_pos(mid, t):
-    m0 = MISSILES[mid]
-    d = (FAKE_TARGET - m0) / np.linalg.norm(FAKE_TARGET - m0)
-    return m0 + V_MISSILE * t * d
 
-def uav_pos(uid, theta, v, t):
-    u0 = UAVS[uid]
-    d = np.array([np.cos(theta), np.sin(theta), 0.0])
-    return u0 + v * t * d
+# ============ 模型一:运动学 ============
 
-def burst_point(uid, theta, v, t_rel, dt_fuse):
-    t_b = t_rel + dt_fuse
-    drop = uav_pos(uid, theta, v, t_rel)
-    d = np.array([np.cos(theta), np.sin(theta), 0.0])
-    bp = drop + v * dt_fuse * d
-    bp[2] -= 0.5 * G * dt_fuse ** 2
-    return bp, t_b
+def missile_pos(missile_id, t):
+    """导弹在时刻t的位置(匀速直线指向原点)"""
+    m0 = MISSILES[missile_id]
+    direction = (FAKE_TARGET - m0) / np.linalg.norm(FAKE_TARGET - m0)
+    return m0 + V_MISSILE * t * direction
+
+
+def missile_hit_time(missile_id):
+    """导弹命中原点时刻"""
+    m0 = MISSILES[missile_id]
+    return np.linalg.norm(m0) / V_MISSILE
+
+
+def uav_pos(uav_id, theta, v, t):
+    """无人机在时刻t的位置(水平匀速直线)
+    theta: 航向角(弧度,以x轴正向逆时针)
+    v: 速度(m/s)
+    """
+    u0 = UAVS[uav_id]
+    direction = np.array([np.cos(theta), np.sin(theta), 0.0])
+    return u0 + v * t * direction
+
+
+def burst_point(uav_id, theta, v, t_rel, dt_fuse):
+    """烟幕弹起爆点坐标
+    t_rel: 投放时刻(从受领任务起)
+    dt_fuse: 引信延迟(投放到起爆)
+    """
+    t_burst = t_rel + dt_fuse
+    # 投放点 = 无人机在t_rel的位置
+    drop_pos = uav_pos(uav_id, theta, v, t_rel)
+    # 起爆点 = 投放点 + 水平惯性v*dt_fuse - 垂直下落
+    direction = np.array([np.cos(theta), np.sin(theta), 0.0])
+    burst = drop_pos + v * dt_fuse * direction
+    burst[2] -= 0.5 * G * dt_fuse ** 2
+    return burst, t_burst
+
+
+def cloud_center(burst_pos, t_burst, t):
+    """烟幕云团球心在时刻t的位置
+    起爆后水平固定,以3m/s匀速下沉
+    """
+    if t < t_burst:
+        return None
+    c = burst_pos.copy()
+    c[2] -= V_SINK * (t - t_burst)
+    return c
+
+
+# ============ 模型二:遮蔽判定(严格视锥) ============
+
+def occlusion_angle(missile_id, cloud_pos, t):
+    """遮蔽半顶角 alpha = arcsin(R/d)
+    d: 导弹到云团球心距离
+    """
+    m_pos = missile_pos(missile_id, t)
+    d = np.linalg.norm(m_pos - cloud_pos)
+    if d <= R_SMOKE:
+        return np.pi / 2  # 导弹在云团内,直接遮蔽
+    return np.arcsin(R_SMOKE / d)
+
+
+def target_max_angle(missile_id, cloud_pos, t, n_samples=360):
+    """目标圆柱最大视角 beta_max
+    对上下底面圆周采样,求最大beta
+    """
+    m_pos = missile_pos(missile_id, t)
+    mc = cloud_pos - m_pos
+    mc_norm = np.linalg.norm(mc)
+
+    if mc_norm < 1e-10:
+        return 0.0
+
+    # 下底面圆心(0,200,0), 上底面圆心(0,200,10)
+    bot_center = TARGET_CENTER.copy()
+    top_center = TARGET_CENTER.copy()
+    top_center[2] += TARGET_HEIGHT
+
+    beta_max = 0.0
+    # 上下圆周各采样n_samples个点
+    for phi in np.linspace(0, 2 * np.pi, n_samples, endpoint=False):
+        offset = TARGET_RADIUS * np.array([np.cos(phi), np.sin(phi), 0.0])
+        for center in [bot_center, top_center]:
+            p = center + offset
+            mp = p - m_pos
+            mp_norm = np.linalg.norm(mp)
+            if mp_norm < 1e-10:
+                continue
+            cos_beta = np.dot(mp, mc) / (mp_norm * mc_norm)
+            cos_beta = np.clip(cos_beta, -1.0, 1.0)
+            beta = np.arccos(cos_beta)
+            if beta > beta_max:
+                beta_max = beta
+    return beta_max
+
+
+def is_occluded(missile_id, cloud_pos, t, n_samples=360):
+    """判断时刻t是否有效遮蔽
+    判据: 导弹在云团内(d<=R)直接遮蔽; 否则 beta_max <= alpha
+    """
+    m_pos = missile_pos(missile_id, t)
+    d = np.linalg.norm(m_pos - cloud_pos)
+    if d <= R_SMOKE:
+        return True  # 导弹在云团内,完全包围,遮蔽有效
+    alpha = np.arcsin(R_SMOKE / d)
+    beta_max = target_max_angle(missile_id, cloud_pos, t, n_samples)
+    return beta_max <= alpha
+
+
+def calc_occlusion_time(missile_id, uav_id, theta, v, t_rel, dt_fuse,
+                        dt_step=0.001, n_samples=360):
+    """计算单弹有效遮蔽时长
+    返回: (遮蔽时长, 遮蔽区间列表, 起爆点, 起爆时刻)
+    """
+    burst_pos, t_burst = burst_point(uav_id, theta, v, t_rel, dt_fuse)
+
+    # 检查起爆点不穿地
+    if burst_pos[2] < 0:
+        return 0.0, [], burst_pos, t_burst
+
+    t_start = t_burst
+    t_end = t_burst + EFFECTIVE_WINDOW
+    total_time = 0.0
+    intervals = []
+    in_occlusion = False
+    interval_start = None
+
+    n_steps = int((t_end - t_start) / dt_step)
+    for i in range(n_steps):
+        t = t_start + i * dt_step
+        cloud_pos = cloud_center(burst_pos, t_burst, t)
+        if cloud_pos is None:
+            continue
+        occluded = is_occluded(missile_id, cloud_pos, t, n_samples)
+        if occluded and not in_occlusion:
+            in_occlusion = True
+            interval_start = t
+        elif not occluded and in_occlusion:
+            in_occlusion = False
+            intervals.append((interval_start, t))
+            total_time += t - interval_start
+
+    if in_occlusion:
+        intervals.append((interval_start, t_end))
+        total_time += t_end - interval_start
+
+    return total_time, intervals, burst_pos, t_burst
+
+
+def calc_occlusion_time_fast(missile_id, uav_id, theta, v, t_rel, dt_fuse,
+                             dt_step=0.001, n_samples=180):
+    """快速版遮蔽时长计算(用于优化器内循环,减少采样点)"""
+    return calc_occlusion_time(missile_id, uav_id, theta, v, t_rel, dt_fuse,
+                               dt_step, n_samples)
+
+
+# ============ Q1: 验证 ============
+
+def solve_q1():
+    """Q1: FY1以120m/s朝假目标飞行,1.5s后投放,3.6s后起爆
+    求对M1的有效遮蔽时长
+    """
+    # FY1朝假目标(原点)飞行 -> theta = atan2(0-0, 0-17800) = pi
+    uav0 = UAVS['FY1']
+    theta = np.arctan2(FAKE_TARGET[1] - uav0[1], FAKE_TARGET[0] - uav0[0])
+    v = 120.0
+    t_rel = 1.5
+    dt_fuse = 3.6
+
+    print(f"Q1参数:")
+    print(f"  FY1朝向角: {np.degrees(theta):.2f}° (朝假目标)")
+    print(f"  速度: {v} m/s")
+    print(f"  投放时刻: {t_rel}s")
+    print(f"  引信延迟: {dt_fuse}s")
+
+    burst_pos, t_burst = burst_point('FY1', theta, v, t_rel, dt_fuse)
+    print(f"  起爆点: ({burst_pos[0]:.2f}, {burst_pos[1]:.2f}, {burst_pos[2]:.2f})")
+    print(f"  起爆时刻: {t_burst:.2f}s")
+
+    T, intervals, _, _ = calc_occlusion_time('M1', 'FY1', theta, v, t_rel, dt_fuse,
+                                              dt_step=0.001, n_samples=360)
+    print(f"\nQ1结果:")
+    print(f"  有效遮蔽时长: {T:.4f}s")
+    print(f"  遮蔽区间: {[(f'{s:.3f}', f'{e:.3f}') for s, e in intervals]}")
+    return T, intervals, burst_pos, t_burst
+
+
+if __name__ == '__main__':
+    solve_q1()
 \end{lstlisting}
 
-\subsection{遮蔽判定 (core.py)}
+\subsection{B. optimizer.py -- 粒子群优化、多弹并集、Q1验证、Q2求解}
+\begin{lstlisting}[language=Python, caption={B. optimizer.py}]
+import numpy as np
+from core import *
 
-\begin{lstlisting}
-def is_occluded(mid, cloud_pos, t, n_samples=360):
-    m_pos = missile_pos(mid, t)
+# ============ 向量化遮蔽判定(加速) ============
+
+def _sample_points(n_samples):
+    """预生成圆柱上下圆周采样点"""
+    phi = np.linspace(0, 2 * np.pi, n_samples, endpoint=False)
+    cos_p = np.cos(phi)
+    sin_p = np.sin(phi)
+    # 下底面
+    bot = np.stack([TARGET_RADIUS * cos_p, TARGET_RADIUS * sin_p,
+                    np.zeros(n_samples)], axis=1)
+    bot[:, 0] += TARGET_CENTER[0]
+    bot[:, 1] += TARGET_CENTER[1]
+    # 上底面
+    top = bot.copy()
+    top[:, 2] += TARGET_HEIGHT
+    return np.vstack([bot, top])  # (2*n_samples, 3)
+
+
+_SAMPLE_CACHE = {}
+def get_samples(n_samples):
+    if n_samples not in _SAMPLE_CACHE:
+        _SAMPLE_CACHE[n_samples] = _sample_points(n_samples)
+    return _SAMPLE_CACHE[n_samples]
+
+
+def is_occluded_vec(missile_id, cloud_pos, t, n_samples=180):
+    """向量化遮蔽判定"""
+    m_pos = missile_pos(missile_id, t)
     mc = cloud_pos - m_pos
     d = np.linalg.norm(mc)
     if d <= R_SMOKE:
         return True
     alpha = np.arcsin(R_SMOKE / d)
 
-    phi = np.linspace(0, 2*np.pi, n_samples, endpoint=False)
-    for p in phi:
-        offset = TARGET_RADIUS * np.array([np.cos(p), np.sin(p), 0])
-        for center in [TARGET_CENTER, TARGET_CENTER+[0,0,TARGET_HEIGHT]]:
-            pt = center + offset
-            mp = pt - m_pos
-            mp_n = np.linalg.norm(mp)
-            if mp_n < 1e-10: continue
-            cos_b = np.dot(mp, mc) / (mp_n * d)
-            cos_b = np.clip(cos_b, -1, 1)
-            beta = np.arccos(cos_b)
-            if beta > beta_max:
-                beta_max = beta
+    pts = get_samples(n_samples)
+    mp = pts - m_pos  # (2n, 3)
+    mp_norm = np.linalg.norm(mp, axis=1)  # (2n,)
+    mc_norm = d
+    cos_beta = (mp @ mc) / (mp_norm * mc_norm + 1e-30)
+    cos_beta = np.clip(cos_beta, -1.0, 1.0)
+    beta = np.arccos(cos_beta)
+    beta_max = beta.max()
     return beta_max <= alpha
-\end{lstlisting}
 
-\subsection{PSO优化器 (optimizer.py)}
 
-\begin{lstlisting}
+def calc_time_fast(missile_id, uav_id, theta, v, t_rel, dt_fuse,
+                   dt_step=0.005, n_samples=180):
+    """快速遮蔽时长(优化器内循环用)"""
+    burst_pos, t_burst = burst_point(uav_id, theta, v, t_rel, dt_fuse)
+    if burst_pos[2] < 0:
+        return 0.0, [], burst_pos, t_burst
+
+    t_start = t_burst
+    t_end = t_burst + EFFECTIVE_WINDOW
+    total = 0.0
+    intervals = []
+    in_occ = False
+    i_start = None
+
+    n_steps = int((t_end - t_start) / dt_step)
+    for i in range(n_steps):
+        t = t_start + i * dt_step
+        c = burst_pos.copy()
+        c[2] -= V_SINK * (t - t_burst)
+        if is_occluded_vec(missile_id, c, t, n_samples):
+            if not in_occ:
+                in_occ = True
+                i_start = t
+        else:
+            if in_occ:
+                in_occ = False
+                intervals.append((i_start, t))
+                total += t - i_start
+    if in_occ:
+        intervals.append((i_start, t_end))
+        total += t_end - i_start
+    return total, intervals, burst_pos, t_burst
+
+
+def calc_time_precise(missile_id, uav_id, theta, v, t_rel, dt_fuse,
+                      dt_step=0.001, n_samples=360):
+    """精确遮蔽时长(最终结果用)"""
+    return calc_time_fast(missile_id, uav_id, theta, v, t_rel, dt_fuse,
+                          dt_step, n_samples)
+
+
+# ============ 多弹并集遮蔽时长 ============
+
+def calc_multi_bomb_time(missile_id, uav_id, theta, v, bombs,
+                         dt_step=0.005, n_samples=180):
+    """多弹并集遮蔽时长
+    bombs: [(t_rel_j, dt_fuse_j), ...]
+    返回: (并集时长, 各弹单独时长列表, 各弹区间列表)
+    """
+    all_intervals = []
+    single_times = []
+    for t_rel, dt_fuse in bombs:
+        T, intervals, _, _ = calc_time_fast(missile_id, uav_id, theta, v,
+                                             t_rel, dt_fuse, dt_step, n_samples)
+        all_intervals.extend(intervals)
+        single_times.append(T)
+
+    # 并集
+    if not all_intervals:
+        return 0.0, single_times, []
+    all_intervals.sort()
+    merged = [list(all_intervals[0])]
+    for s, e in all_intervals[1:]:
+        if s <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], e)
+        else:
+            merged.append([s, e])
+    union_time = sum(e - s for s, e in merged)
+    return union_time, single_times, merged
+
+
+# ============ Q2: PSO单弹优化 ============
+
 def solve_q2(n_particles=30, n_iter=40, seed=42):
+    """Q2: 优化FY1单弹对M1的遮蔽时长
+    变量: theta(0~2pi), v(70~140), t_rel(0~10), dt_fuse(0~6)
+    """
     rng = np.random.RandomState(seed)
     lb = np.array([0.0, 70.0, 0.0, 0.0])
-    ub = np.array([2*np.pi, 140.0, 10.0, 6.0])
-    pos = rng.uniform(lb, ub, (n_particles, 4))
+    ub = np.array([2 * np.pi, 140.0, 10.0, 6.0])
+    dim = 4
+
+    # 初始化粒子
+    pos = rng.uniform(lb, ub, (n_particles, dim))
+    # 给一个朝假目标方向的初始解(加速收敛)
     pos[0] = [np.pi, 120.0, 1.5, 3.6]
-    vel = np.zeros((n_particles, 4))
-    pbest = pos.copy()
+    vel = np.zeros((n_particles, dim))
 
     def fitness(x):
-        theta, v, tr, df = x
-        if v < 70 or v > 140: return 0.0
-        if UAVS['FY1'][2] - 4.9*df**2 < 0: return 0.0
-        T, _, _, _ = calc_time_fast('M1', 'FY1', theta, v, tr, df)
+        theta, v, t_rel, dt_fuse = x
+        if v < 70 or v > 140:
+            return 0.0
+        burst_z = UAVS['FY1'][2] - 0.5 * G * dt_fuse ** 2
+        if burst_z < 0:
+            return 0.0
+        T, _, _, _ = calc_time_fast('M1', 'FY1', theta, v, t_rel, dt_fuse,
+                                     dt_step=0.01, n_samples=120)
         return T
 
-    pf = np.array([fitness(p) for p in pos])
-    gi = np.argmax(pf); gb, gf = pos[gi].copy(), pf[gi]
+    pbest_pos = pos.copy()
+    pbest_fit = np.array([fitness(p) for p in pos])
+    gbest_idx = np.argmax(pbest_fit)
+    gbest_pos = pbest_pos[gbest_idx].copy()
+    gbest_fit = pbest_fit[gbest_idx]
 
+    w, c1, c2 = 0.7, 1.5, 1.5
     for it in range(n_iter):
-        r1 = rng.random((n_particles, 4))
-        r2 = rng.random((n_particles, 4))
-        vel = 0.7*vel + 1.5*r1*(pbest-pos) + 1.5*r2*(gb-pos)
-        pos = np.clip(pos+vel, lb, ub)
+        r1 = rng.random((n_particles, dim))
+        r2 = rng.random((n_particles, dim))
+        vel = w * vel + c1 * r1 * (pbest_pos - pos) + c2 * r2 * (gbest_pos - pos)
+        pos = pos + vel
+        pos = np.clip(pos, lb, ub)
+
         for i in range(n_particles):
             f = fitness(pos[i])
+            if f > pbest_fit[i]:
+                pbest_fit[i] = f
+                pbest_pos[i] = pos[i].copy()
+            if f > gbest_fit:
+                gbest_fit = f
+                gbest_pos = pos[i].copy()
+
+        if (it + 1) % 10 == 0:
+            print(f"  PSO iter {it+1}/{n_iter}: gbest={gbest_fit:.4f}s")
+
+    # 精确验证
+    theta, v, t_rel, dt_fuse = gbest_pos
+    T_precise, intervals, burst_pos, t_burst = calc_time_precise(
+        'M1', 'FY1', theta, v, t_rel, dt_fuse)
+
+    print(f"\nQ2结果(精确):")
+    print(f"  航向角: {np.degrees(theta):.2f}°")
+    print(f"  速度: {v:.2f} m/s")
+    print(f"  投放时刻: {t_rel:.4f}s")
+    print(f"  引信延迟: {dt_fuse:.4f}s")
+    print(f"  起爆点: ({burst_pos[0]:.2f}, {burst_pos[1]:.2f}, {burst_pos[2]:.2f})")
+    print(f"  有效遮蔽时长: {T_precise:.4f}s")
+    print(f"  遮蔽区间: {[(f'{s:.3f}', f'{e:.3f}') for s, e in intervals]}")
+    return gbest_pos, T_precise, intervals, burst_pos
+
+
+if __name__ == '__main__':
+    print("=" * 60)
+    print("Q2: FY1单弹优化")
+    print("=" * 60)
+    solve_q2(n_particles=30, n_iter=40)
+\end{lstlisting}
+
+\subsection{C. solve_fix.py -- Q3三弹接力、Q4三机协同、Q5多对多}
+\begin{lstlisting}[language=Python, caption={C. solve_fix.py}]
+import numpy as np, sys
+from core import *
+from optimizer import calc_time_fast, calc_time_precise
+
+def log(msg): print(msg, flush=True)
+
+def search_uav(uav_id, missile_id):
+    """3维网格: theta x t_rel x dt_fuse, v=140"""
+    uav0 = UAVS[uav_id]
+    best_T, best_p = 0.0, None
+
+    # 搜索dt_fuse从0到9, 步长1s
+    for df in np.arange(0, 9.5, 1.0):
+        burst_z = uav0[2] - 4.9 * df ** 2
+        if burst_z < 0:
+            break
+        for th_deg in range(0, 360, 4):
+            th = np.radians(th_deg)
+            for tr in np.arange(0, 40, 1.0):
+                T, _, _, _ = calc_time_fast(missile_id, uav_id, th, 140.0, tr, df,
+                                             dt_step=0.05, n_samples=50)
+                if T > best_T:
+                    best_T = T
+                    best_p = (th, 140.0, tr, df)
+    return best_p, best_T
+
+def pso_refine(uav_id, missile_id, init_p, n_p=25, n_i=30):
+    th0, v0, tr0, df0 = init_p
+    rng = np.random.RandomState(hash(uav_id+missile_id)%1000)
+    lb = np.array([th0-0.3, 70, max(0,tr0-3), max(0,df0-1.5)])
+    ub = np.array([th0+0.3, 140, tr0+3, df0+1.5])
+    pos = rng.uniform(lb, ub, (n_p, 4))
+    pos[0] = list(init_p)
+    vel = np.zeros((n_p, 4))
+    pbest = pos.copy()
+    def fit(x):
+        th, vv, tr, df = x
+        if UAVS[uav_id][2]-0.5*G*df**2 < 0: return 0.0
+        if tr < 0 or df < 0: return 0.0
+        T, _, _, _ = calc_time_fast(missile_id, uav_id, th, vv, tr, df, dt_step=0.02, n_samples=100)
+        return T
+    pf = np.array([fit(p) for p in pos])
+    gi = np.argmax(pf); gb, gf = pos[gi].copy(), pf[gi]
+    for it in range(n_i):
+        r1, r2 = rng.random((n_p,4)), rng.random((n_p,4))
+        vel = 0.6*vel + 1.8*r1*(pbest-pos) + 1.8*r2*(gb-pos)
+        pos = np.clip(pos+vel, lb, ub)
+        for i in range(n_p):
+            f = fit(pos[i])
             if f > pf[i]: pf[i], pbest[i] = f, pos[i].copy()
             if f > gf: gf, gb = f, pos[i].copy()
+    return tuple(gb), gf
 
-    return gb, gf
+
+if __name__ == '__main__':
+    from optimizer import solve_q2
+    from solve_v2 import solve_q3_v2
+
+    # Q2
+    log("="*50); log("Q2"); log("="*50)
+    q2p, q2T, _, _ = solve_q2(n_particles=25, n_iter=30)
+    log(f"Q2: {q2T:.4f}s")
+
+    # Q3
+    log("\nQ3...")
+    q3th, q3v, q3bombs, q3T, _ = solve_q3_v2(q2p)
+    log(f"Q3: {q3T:.4f}s")
+
+    # Q4: FY2, FY3 扩大dt_fuse搜索
+    log("\n"+"="*50); log("Q4 (扩大dt_fuse)"); log("="*50)
+    q4 = {'FY1': tuple(q2p)}
+    for uid in ['FY2', 'FY3']:
+        log(f"  {uid} 3维网格搜索(dt_fuse 0~9)...")
+        p, T = search_uav(uid, 'M1')
+        if p and T > 0.01:
+            log(f"    网格: T={T:.3f}s, θ={np.degrees(p[0]):.1f}°, v={p[1]:.0f}, tr={p[2]:.1f}, df={p[3]:.1f}")
+            log(f"    PSO精修...")
+            p2, T2 = pso_refine(uid, 'M1', p)
+            Tp, iv, _, _ = calc_time_precise('M1', uid, *p2)
+            q4[uid] = p2
+            log(f"    {uid}: T={Tp:.4f}s, θ={np.degrees(p2[0]):.2f}°, v={p2[1]:.1f}, tr={p2[2]:.3f}, df={p2[3]:.3f}")
+        else:
+            q4[uid] = (0.0, 100.0, 1.0, 0.0)
+            log(f"    {uid}: 无有效遮蔽")
+
+    # Q4并集
+    all_iv = []
+    for uid, (th,vv,tr,df) in q4.items():
+        T, iv, _, _ = calc_time_precise('M1', uid, th, vv, tr, df)
+        all_iv.extend(iv)
+        log(f"  {uid}: T={T:.4f}s")
+    all_iv.sort()
+    merged = [list(all_iv[0])] if all_iv else []
+    for s,e in all_iv[1:]:
+        if s <= merged[-1][1]: merged[-1][1] = max(merged[-1][1], e)
+        else: merged.append([s,e])
+    q4T = sum(e-s for s,e in merged) if merged else 0
+    log(f"Q4联合: {q4T:.4f}s")
+
+    # Q5
+    log("\n"+"="*50); log("Q5"); log("="*50)
+    assign = {'FY1':'M1', 'FY2':'M1', 'FY3':'M2', 'FY4':'M3', 'FY5':'M3'}
+    q5 = {}; q5T = 0.0
+    for uid, mid in assign.items():
+        log(f"  {uid}→{mid} 搜索...")
+        if uid == 'FY1':
+            # FY1用Q2结果
+            T, iv, _, _ = calc_time_precise(mid, uid, *q2p)
+            q5[uid] = (mid, tuple(q2p), T, iv)
+            q5T += T
+            log(f"    T={T:.4f}s")
+        else:
+            p, T = search_uav(uid, mid)
+            if p and T > 0.01:
+                p2, T2 = pso_refine(uid, mid, p)
+                Tp, iv, _, _ = calc_time_precise(mid, uid, *p2)
+                q5[uid] = (mid, p2, Tp, iv)
+                q5T += Tp
+                log(f"    T={Tp:.4f}s, θ={np.degrees(p2[0]):.2f}°")
+            else:
+                q5[uid] = (mid, (0,100,1,0), 0, [])
+                log(f"    无有效遮蔽")
+    log(f"Q5总计: {q5T:.4f}s")
+
+    log("\n"+"="*50)
+    log("汇总")
+    log("="*50)
+    log(f"Q1: 1.3920s")
+    log(f"Q2: {q2T:.4f}s")
+    log(f"Q3: {q3T:.4f}s")
+    log(f"Q4: {q4T:.4f}s")
+    log(f"Q5: {q5T:.4f}s")
+
+    # 保存结果供论文使用
+    import json
+    results = {
+        'Q1': 1.3920, 'Q2': round(q2T,4), 'Q3': round(q3T,4),
+        'Q4': round(q4T,4), 'Q5': round(q5T,4),
+        'Q2_params': [round(float(x),4) for x in q2p],
+        'Q3_params': [round(np.degrees(q3th),4), round(q3v,4),
+                      [[round(tr,4),round(df,4)] for tr,df in q3bombs]],
+        'Q4_params': {uid: [round(float(x),4) for x in q4[uid]] for uid in q4},
+        'Q5_params': {uid: {'missile': q5[uid][0],
+                            'params': [round(float(x),4) for x in q5[uid][1]],
+                            'T': round(q5[uid][2],4)} for uid in q5},
+    }
+    with open(r"C:\Users\wuyan\Desktop\xiaosai\A题_solution\stage2\results.json", 'w') as f:
+        json.dump(results, f, indent=2, ensure_ascii=False)
+    log("results.json 已保存")
+\end{lstlisting}
+
+\subsection{D. fy4_inverse.py -- FY4逆向运动学搜索}
+\begin{lstlisting}[language=Python, caption={D. fy4_inverse.py}]
+import numpy as np
+from core import *
+from optimizer import calc_time_fast, calc_time_precise
+
+def log(msg): print(msg, flush=True)
+
+def inverse_kinematics_search(uav_id, missile_id):
+    """逆向运动学: 对每个(t, u, dt_fuse)求解UAV参数"""
+    uav0 = UAVS[uav_id]
+    best_T, best_params = 0.0, None
+
+    for dt_fuse in np.arange(0, 10, 0.5):
+        burst_z = uav0[2] - 4.9 * dt_fuse ** 2
+        if burst_z < 0:
+            continue
+        for t in np.arange(3, 60, 0.5):
+            m_pos = missile_pos(missile_id, t)
+            # 视线参数化: L(u) = u*TARGET + (1-u)*M(t)
+            # C = L(u) = ((1-u)*Mx, 200u, (1-u)*Mz)  (真目标(0,200,0))
+            # 但真目标中心是(0,200,0), 视线到中心
+            # 实际视线是 M(t) → 真目标圆柱表面, 用中心近似
+            target = TARGET_CENTER  # (0,200,0)
+
+            for u in np.arange(0.01, 0.99, 0.05):
+                # 云团球心 = 视线上的点
+                Cx = (1-u) * m_pos[0] + u * target[0]
+                Cy = (1-u) * m_pos[1] + u * target[1]
+                Cz = (1-u) * m_pos[2] + u * target[2]
+
+                # 起爆点z = Cz + 3*(t - t_b), t_b = t_rel + dt_fuse
+                # 起爆点z = uav_z - 4.9*dt_fuse^2
+                # 所以: Cz + 3*(t - t_b) = uav_z - 4.9*dt_fuse^2
+                # t_b = (Cz + 3*t - uav_z + 4.9*dt_fuse^2) / 3
+                t_b = (Cz + 3*t - uav0[2] + 4.9*dt_fuse**2) / 3
+                if t_b <= 0:
+                    continue
+                t_rel = t_b - dt_fuse
+                if t_rel < 0:
+                    continue
+
+                # 起爆点x,y = UAV位置 + v*t_b*方向
+                # 起爆点x = uav_x + v*t_b*cos(theta) = Cx
+                # 起爆点y = uav_y + v*t_b*sin(theta) = Cy
+                dx = Cx - uav0[0]
+                dy = Cy - uav0[1]
+                dist_xy = np.sqrt(dx**2 + dy**2)
+
+                # v*t_b = dist_xy → v = dist_xy / t_b
+                v = dist_xy / t_b
+                if v < 70 or v > 140:
+                    continue
+
+                theta = np.arctan2(dy, dx)
+
+                # 验证: 用求得的参数计算遮蔽时长
+                T, _, _, _ = calc_time_fast(missile_id, uav_id, theta, v, t_rel, dt_fuse,
+                                             dt_step=0.05, n_samples=60)
+                if T > best_T:
+                    best_T = T
+                    best_params = (theta, v, t_rel, dt_fuse)
+                    if T > 0.5:
+                        log(f"    找到! t={t:.1f}, u={u:.2f}, df={dt_fuse:.1f}, "
+                            f"θ={np.degrees(theta):.1f}°, v={v:.1f}, tr={t_rel:.2f}, T={T:.3f}s")
+
+    return best_params, best_T
+
+
+def pso_refine(uav_id, missile_id, init_p, n_p=30, n_i=40):
+    th0, v0, tr0, df0 = init_p
+    rng = np.random.RandomState(hash(uav_id+missile_id+"refine")%1000)
+    lb = np.array([th0-0.5, max(70,v0-20), max(0,tr0-3), max(0,df0-2)])
+    ub = np.array([th0+0.5, min(140,v0+20), tr0+3, df0+2])
+    pos = rng.uniform(lb, ub, (n_p, 4))
+    pos[0] = list(init_p)
+    vel = np.zeros((n_p, 4))
+    pbest = pos.copy()
+    def fit(x):
+        th, vv, tr, df = x
+        if UAVS[uav_id][2]-0.5*G*df**2 < 0: return 0.0
+        if vv < 70 or vv > 140: return 0.0
+        T, _, _, _ = calc_time_fast(missile_id, uav_id, th, vv, tr, df, dt_step=0.02, n_samples=100)
+        return T
+    pf = np.array([fit(p) for p in pos])
+    gi = np.argmax(pf); gb, gf = pos[gi].copy(), pf[gi]
+    for it in range(n_i):
+        r1, r2 = rng.random((n_p,4)), rng.random((n_p,4))
+        vel = 0.6*vel + 1.8*r1*(pbest-pos) + 1.8*r2*(gb-pos)
+        pos = np.clip(pos+vel, lb, ub)
+        for i in range(n_p):
+            f = fit(pos[i])
+            if f > pf[i]: pf[i], pbest[i] = f, pos[i].copy()
+            if f > gf: gf, gb = f, pos[i].copy()
+    return tuple(gb), gf
+
+
+if __name__ == '__main__':
+    log("="*60)
+    log("FY4 逆向运动学搜索")
+    log("="*60)
+    log(f"FY4初始位置: {UAVS['FY4']}")
+
+    for mid in ['M1', 'M2', 'M3']:
+        m0 = MISSILES[mid]
+        log(f"\n--- FY4 → {mid} (导弹初始{m0}) ---")
+        p, T = inverse_kinematics_search('FY4', mid)
+        if p and T > 0.01:
+            log(f"  逆向搜索最优: T={T:.4f}s")
+            log(f"    θ={np.degrees(p[0]):.2f}°, v={p[1]:.2f}, tr={p[2]:.3f}, df={p[3]:.3f}")
+            log(f"  PSO精修...")
+            p2, T2 = pso_refine('FY4', mid, p)
+            Tp, iv, bp, tb = calc_time_precise(mid, 'FY4', *p2)
+            log(f"  精确验证: T={Tp:.4f}s")
+            log(f"    θ={np.degrees(p2[0]):.2f}°, v={p2[1]:.2f}, tr={p2[2]:.3f}, df={p2[3]:.3f}")
+            log(f"    起爆点: ({bp[0]:.1f}, {bp[1]:.1f}, {bp[2]:.1f})")
+            log(f"    遮蔽区间: {[(f'{s:.3f}',f'{e:.3f}') for s,e in iv]}")
+        else:
+            log(f"  未找到有效遮蔽参数")
+\end{lstlisting}
+
+\subsection{E. update_q5.py -- Q5结果整合与result文件输出}
+\begin{lstlisting}[language=Python, caption={E. update_q5.py}]
+import numpy as np, json, openpyxl
+from core import *
+from optimizer import calc_time_precise, calc_multi_bomb_time
+
+def log(msg): print(msg, flush=True)
+
+# 加载之前的结果
+with open(r"C:\Users\wuyan\Desktop\xiaosai\A题_solution\stage2\results.json") as f:
+    R = json.load(f)
+
+# FY4新参数(逆向运动学找到的)
+fy4_params = (np.radians(-54.87), 134.40, 4.849, 9.614)  # θ, v, t_rel, dt_fuse
+
+# Q5新分配
+assign = {
+    'FY1': ('M1', R['Q5_params']['FY1']['params']),
+    'FY2': ('M1', R['Q5_params']['FY2']['params']),
+    'FY3': ('M2', R['Q5_params']['FY3']['params']),
+    'FY4': ('M2', list(fy4_params)),
+    'FY5': ('M3', R['Q5_params']['FY5']['params']),
+}
+
+log("="*60)
+log("Q5 更新: FY4→M2")
+log("="*60)
+
+# 计算各弹精确遮蔽时长和区间
+missile_intervals = {'M1': [], 'M2': [], 'M3': []}
+all_results = {}
+
+for uid, (mid, params) in assign.items():
+    th, v, tr, df = params
+    T, iv, bp, tb = calc_time_precise(mid, uid, th, v, tr, df)
+    missile_intervals[mid].extend(iv)
+    all_results[uid] = (mid, th, v, tr, df, T, iv, bp, tb)
+    log(f"  {uid}→{mid}: T={T:.4f}s, θ={np.degrees(th):.2f}°, v={v:.1f}")
+    log(f"    区间: {[(f'{s:.3f}',f'{e:.3f}') for s,e in iv]}")
+
+# 各导弹遮蔽并集
+log("\n各导弹遮蔽并集:")
+total_T = 0.0
+for mid in ['M1', 'M2', 'M3']:
+    ivs = sorted(missile_intervals[mid])
+    if not ivs:
+        log(f"  {mid}: 0s (无遮蔽)")
+        continue
+    merged = [list(ivs[0])]
+    for s, e in ivs[1:]:
+        if s <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], e)
+        else:
+            merged.append([s, e])
+    union_T = sum(e - s for s, e in merged)
+    total_T += union_T
+    log(f"  {mid}: {union_T:.4f}s (合并{len(merged)}段)")
+
+log(f"\nQ5总遮蔽: {total_T:.4f}s (之前: 15.149s)")
+
+# 更新result3.xlsx
+log("\n更新result3.xlsx...")
+wb = openpyxl.Workbook(); ws = wb.active; ws.title="Sheet1"
+ws.append(['无人机编号','无人机运动方向','无人机运动速度 (m/s)','烟幕干扰弹编号',
+    '烟幕干扰弹投放点的x坐标 (m)','烟幕干扰弹投放点的y坐标 (m)','烟幕干扰弹投放点的z坐标 (m)',
+    '烟幕干扰弹起爆点的x坐标 (m)','烟幕干扰弹起爆点的y坐标 (m)','烟幕干扰弹起爆点的z坐标 (m)',
+    '有效干扰时长 (s)','干扰的导弹编号'])
+
+for uid in ['FY1','FY2','FY3','FY4','FY5']:
+    mid, th, v, tr, df, T, iv, bp, tb = all_results[uid]
+    drop = uav_pos(uid, th, v, tr)
+    ws.append([uid, round(np.degrees(th)%360,4), round(v,4), 1,
+               round(drop[0],4),round(drop[1],4),round(drop[2],4),
+               round(bp[0],4),round(bp[1],4),round(bp[2],4), round(T,4), mid])
+    for j in range(2):
+        ws.append([uid, None, None, j+2]+[None]*8)
+
+ws.append([None]*12)
+ws.append([None,'注：以x轴为正向，逆时针方向为正，取值0~360（度）。']+[None]*10)
+wb.save(r"C:\Users\wuyan\Desktop\xiaosai\A题_solution\stage2\result3.xlsx")
+log("  result3.xlsx 已更新")
+
+# 保存更新后的结果
+q5_new = {
+    'Q5_updated': round(total_T, 4),
+    'details': {uid: {
+        'missile': all_results[uid][0],
+        'theta_deg': round(np.degrees(all_results[uid][1])%360, 4),
+        'v': round(all_results[uid][2], 4),
+        't_rel': round(all_results[uid][3], 4),
+        'dt_fuse': round(all_results[uid][4], 4),
+        'T': round(all_results[uid][5], 4),
+    } for uid in all_results}
+}
+with open(r"C:\Users\wuyan\Desktop\xiaosai\A题_solution\stage2\q5_updated.json", 'w') as f:
+    json.dump(q5_new, f, indent=2, ensure_ascii=False)
+log("  q5_updated.json 已保存")
+
+log(f"\n最终汇总:")
+log(f"Q1: 1.392s, Q2: 4.578s, Q3: 6.405s, Q4: 11.506s, Q5: {total_T:.4f}s")
 \end{lstlisting}
 
 \begin{thebibliography}{99}
