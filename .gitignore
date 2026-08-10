@@ -1,1 +1,59 @@
+# ==================== 操作系统 ====================
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ==================== IDE / 编辑器 ====================
+.vscode/
+.idea/
+*.swp
+*.swo
 .workbuddy/
+
+# ==================== Python ====================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# ==================== LaTeX 构建产物 ====================
+# 注意: 源文件(.tex/.bib)与成品PDF保留, 仅忽略中间产物
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex
+*.synctex.gz
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+*.nav
+*.snm
+*.vrb
+*.xdv
+*.ilg
+*.idx
+*.ind
+*.nlo
+*.glo
+*.ist
+
+# ==================== Excel 临时文件 ====================
+~$*.xlsx
+~$*.xls
