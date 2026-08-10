@@ -29,6 +29,7 @@ htmlcov/
 
 # ==================== LaTeX 构建产物 ====================
 # 注意: 源文件(.tex/.bib)与成品PDF保留, 仅忽略中间产物
+A题_solution/stage3/out/
 *.aux
 *.log
 *.out
