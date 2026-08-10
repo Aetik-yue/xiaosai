@@ -4,6 +4,7 @@
 \setCJKmainfont{SimSun}[BoldFont=SimHei, ItalicFont=KaiTi]
 \setCJKsansfont{SimHei}
 \setCJKmonofont{FangSong}
+\newCJKfontfamily\heiti{SimHei}
 
 % 中文编号支持
 \usepackage{zhnumber}
@@ -37,9 +38,7 @@
 \renewcommand{\figurename}{图}
 \renewcommand{\tablename}{表}
 
-\titleformat{\section}{\zihao{4}\bfseries\heiti}{\thesection}{1em}{}
-\titleformat{\subsection}{\zihao{-4}\bfseries\heiti}{\thesubsection}{1em}{}
-\titleformat{\subsubsection}{\zihao{-4}\bfseries\heiti}{\thesubsubsection}{1em}{}
+% 章节编号直接书写在标题文本中(如"一、问题重述"、"1.1 问题背景")，字体格式见下方titleformat定义
 \captionsetup{font=small,labelfont=bf}
 
 \definecolor{dkgreen}{rgb}{0,0.6,0}
@@ -50,19 +49,19 @@
   numbers=none, keywordstyle=\color{blue}, commentstyle=\color{dkgreen},
   stringstyle=\color{mauve}, breaklines=true, tabsize=3}
 
-\title{\zihao{2}\bfseries 烟幕干扰弹的投放策略研究}
+\title{\fontsize{22}{28}\selectfont\bfseries 烟幕干扰弹的投放策略研究}
 \author{}
 \date{}
 
-\titleformat{\section}{\zihao{4}\bfseries\heiti}{}{0em}{}
-\titleformat{\subsection}{\zihao{-4}\bfseries\heiti}{}{0em}{}
-\titleformat{\subsubsection}{\zihao{-4}\bfseries\heiti}{}{0em}{}
+\titleformat{\section}{\fontsize{14}{18}\selectfont\bfseries\heiti}{}{0em}{}
+\titleformat{\subsection}{\fontsize{12}{15}\selectfont\bfseries\heiti}{}{0em}{}
+\titleformat{\subsubsection}{\fontsize{12}{15}\selectfont\bfseries\heiti}{}{0em}{}
 \begin{document}
 \maketitle
 
 % ==================== 摘要 ====================
 \begin{center}
-{\zihao{4}\bfseries 摘\quad 要}
+{\fontsize{14}{18}\selectfont\bfseries 摘\quad 要}
 \end{center}
 
 \noindent 烟幕干扰弹通过在来袭导弹与保护目标之间形成烟幕遮蔽，干扰导弹对真目标的探测与打击。本文针对无人机投放烟幕干扰弹的策略优化问题，建立了运动学建模、几何遮蔽判定与混合整数非线性优化三层模型体系，通过粒子群优化与分层策略求解了五种递进场景下的最优投放方案。
@@ -99,7 +98,7 @@
 
 \subsection{1.2 问题提出}
 
-雷达发现导弹时，3枚导弹$M_1$、$M_2$、$M_3$及5架无人机$FY_1$\textasciitilde$FY_5$的位置已知（表\ref{tab:init}）。无人机受领任务后可瞬时调整飞行方向，以70\textasciitilde140\,m/s等高度匀速直线飞行。每架无人机投放两枚弹至少间隔1\,s。
+雷达发现导弹时，3枚导弹$M_1$、$M_2$、$M_3$及5架无人机$FY_1$\textasciitilde$FY_5$的位置已知（表\ref{tab:init}）\cite{1}。无人机受领任务后可瞬时调整飞行方向，以70\textasciitilde140\,m/s等高度匀速直线飞行。每架无人机投放两枚弹至少间隔1\,s。
 
 \begin{table}[H]
 \centering
@@ -136,7 +135,7 @@ $FY_5$ & $(13000, -2000, 1300)$ & 无人机 \\
 
 \subsection{2.1 总体思路}
 
-本题的核心在于两层耦合：（1）精确描述导弹、无人机、烟幕弹及云团的三维运动轨迹；（2）建立严格的有效遮蔽判定准则。在此基础上，通过优化算法搜索最优投放策略。
+本题的核心在于两层耦合：（1）精确描述导弹、无人机、烟幕弹及云团的三维运动轨迹；（2）建立严格的有效遮蔽判定准则。在此基础上，通过优化算法搜索最优投放策略。本文遵循数学建模的一般方法流程\cite{4}。
 
 \begin{figure}[H]
 \centering
@@ -329,7 +328,7 @@ t_b \leq t_f \approx 66.7\,\text{s}
 
 \subsubsection{求解算法：粒子群优化}
 
-采用粒子群优化（PSO）算法求解。PSO通过群体中粒子的信息共享搜索全局最优，适合目标函数不可解析的非线性优化问题。算法流程如图\ref{fig:flowchart}所示。
+采用粒子群优化（PSO）算法求解\cite{2}。PSO通过群体中粒子的信息共享搜索全局最优，适合目标函数不可解析的非线性优化问题，差分进化（DE）等元启发式算法同样适用于此类问题\cite{3}。算法流程如图\ref{fig:flowchart}所示。
 
 \begin{figure}[H]
 \centering
@@ -428,7 +427,7 @@ t_b \leq t_f \approx 66.7\,\text{s}
 \label{fig:q2_sens}
 \end{figure}
 
-最优解中引信延迟$\Delta t = 0$，即投放即起爆。这表明在单弹场景下，让烟幕云团在无人机当前位置（$z=1800$\,m高度）瞬时形成是最优的——弹的平抛下落反而会使云团偏离最佳遮蔽位置。最优航向角$4.20^\circ$接近$x$轴正向，即朝导弹来袭方向飞行，使烟幕弹尽早出现在导弹与目标之间的视线上。灵敏度分析（图\ref{fig:q2_sens}）表明航向角在最优值附近变化时，遮蔽时长变化平缓，模型对航向角具有稳健性。
+最优解中引信延迟$\Delta t = 0$，即投放即起爆。这表明在单弹场景下，让烟幕云团在无人机当前位置（$z=1800$\,m高度）瞬时形成是最优的——弹的平抛下落反而会使云团偏离最佳遮蔽位置。最优航向角$4.20^\circ$接近$x$轴正向，即朝导弹来袭方向飞行，使烟幕弹尽早出现在导弹与目标之间的视线上。灵敏度分析（图\ref{fig:q2_sens}）表明航向角在最优值附近存在明显峰值，遮蔽时长对航向角较为敏感，而对飞行速度相对稳健。
 
 \subsection{问题三求解}
 
@@ -459,9 +458,9 @@ $FY_1$投放3枚弹，航向角$\theta$和速度$v$共享，各弹有独立的�
 \toprule
 弹编号 & 投放时刻$t_{rel}$(s) & 引信延迟$\Delta t$(s) & 单弹遮蔽时长(s) & 遮蔽区间 \\
 \midrule
-1 & 0.0000 & 0.0000 & 2.555 & --- \\
-2 & 1.0000 & 0.0000 & 4.260 & --- \\
-3 & 11.993 & 4.017 & 0.000 & --- \\
+1 & 0.0000 & 0.0000 & 2.556 & $[4.848,\ 7.404]$ \\
+2 & 1.0000 & 0.0000 & 4.257 & $[1.000,\ 5.257]$ \\
+3 & 11.993 & 4.017 & 0.000 & 无有效遮蔽 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -515,7 +514,7 @@ $FY_3$ & $94.05^\circ$ & 140.00 & 17.450 & 4.816 & 3.000 \\
 \label{fig:q4}
 \end{figure}
 
-三机遮蔽时间窗口基本不重叠（图\ref{fig:q4}）：$FY_1$在早期（$t\approx2$\textasciitilde$6$\,s）遮蔽，$FY_2$在中期（$t\approx15$\textasciitilde$19$\,s）接力，$FY_3$在后期（$t\approx22$\textasciitilde$25$\,s）收尾。$FY_2$最优航向角$304.51^\circ$表明需朝$x$负方向、$y$负方向飞行以接近$M_1$的视线；$FY_3$航向角$94.05^\circ$（接近$y$正方向）则因其初始位置$(6000, -3000, 700)$需朝$y$正方向飞行以接近视线。
+三机遮蔽时间窗口基本不重叠（图\ref{fig:q4}）：$FY_1$在早期（$t\approx2$\textasciitilde$6$\,s）遮蔽，$FY_2$在中期（$t\approx15$\textasciitilde$19$\,s）接力，$FY_3$在后期（$t\approx22$\textasciitilde$25$\,s）收尾。$FY_2$最优航向角$304.51^\circ$表明需朝$x$正方向、$y$负方向飞行以接近$M_1$的视线；$FY_3$航向角$94.05^\circ$（接近$y$正方向）则因其初始位置$(6000, -3000, 700)$需朝$y$正方向飞行以接近视线。
 
 \subsection{问题五求解}
 
@@ -588,7 +587,7 @@ $M_3$ & 3.639 \\
 \label{fig:q5}
 \end{figure}
 
-5架无人机均实现了有效遮蔽（图\ref{fig:q5}），总遮蔽时长18.917\,s。$FY_4$通过逆向运动学方法找到了对$M_2$的有效遮蔽方案：以$305.13^\circ$航向（朝$x$负方向、$y$负方向）飞行，利用$9.614$\,s的长引信延迟使烟幕弹下落至$M_2$视线高度（$z \approx 1347$\,m），在$t \approx 14.8$\textasciitilde$18.6$\,s形成遮蔽，与$FY_3$（$t \approx 24.2$\textasciitilde$27.2$\,s）形成时间接力。
+5架无人机均实现了有效遮蔽（图\ref{fig:q5}），总遮蔽时长18.917\,s。$FY_4$通过逆向运动学方法找到了对$M_2$的有效遮蔽方案：以$305.13^\circ$航向（朝$x$正方向、$y$负方向）飞行，利用$9.614$\,s的长引信延迟使烟幕弹下落至$M_2$视线高度（$z \approx 1347$\,m），在$t \approx 14.8$\textasciitilde$18.6$\,s形成遮蔽，与$FY_3$（$t \approx 24.2$\textasciitilde$27.2$\,s）形成时间接力。
 
 \subsubsection{多弹接力分析}
 
@@ -1085,8 +1084,8 @@ if __name__ == '__main__':
     solve_q2(n_particles=30, n_iter=40)
 \end{lstlisting}
 
-\subsection{C. solve_fix.py -- Q3三弹接力、Q4三机协同、Q5多对多}
-\begin{lstlisting}[language=Python, caption={C. solve_fix.py}]
+\subsection{C. solve\_fix.py -- Q3三弹接力、Q4三机协同、Q5多对多}
+\begin{lstlisting}[language=Python, caption={C. solve\_fix.py}]
 import numpy as np, sys
 from core import *
 from optimizer import calc_time_fast, calc_time_precise
@@ -1188,6 +1187,9 @@ if __name__ == '__main__':
 
     # Q5
     log("\n"+"="*50); log("Q5"); log("="*50)
+    # 注: 本脚本为中间版本, FY4暂按M3搜索, 得Q5=15.149s;
+    # 最终结果18.917s需运行附录D(fy4_inverse.py)+附录E(update_q5.py),
+    # 将FY4修正为干扰M2(θ=305.13°, v=134.40, t_rel=4.849, Δt=9.614s)。
     assign = {'FY1':'M1', 'FY2':'M1', 'FY3':'M2', 'FY4':'M3', 'FY5':'M3'}
     q5 = {}; q5T = 0.0
     for uid, mid in assign.items():
@@ -1233,13 +1235,13 @@ if __name__ == '__main__':
                             'params': [round(float(x),4) for x in q5[uid][1]],
                             'T': round(q5[uid][2],4)} for uid in q5},
     }
-    with open(r"C:\Users\wuyan\Desktop\xiaosai\A题_solution\stage2\results.json", 'w') as f:
+    with open("results.json", 'w') as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
     log("results.json 已保存")
 \end{lstlisting}
 
-\subsection{D. fy4_inverse.py -- FY4逆向运动学搜索}
-\begin{lstlisting}[language=Python, caption={D. fy4_inverse.py}]
+\subsection{D. fy4\_inverse.py -- FY4逆向运动学搜索}
+\begin{lstlisting}[language=Python, caption={D. fy4\_inverse.py}]
 import numpy as np
 from core import *
 from optimizer import calc_time_fast, calc_time_precise
@@ -1359,8 +1361,8 @@ if __name__ == '__main__':
             log(f"  未找到有效遮蔽参数")
 \end{lstlisting}
 
-\subsection{E. update_q5.py -- Q5结果整合与result文件输出}
-\begin{lstlisting}[language=Python, caption={E. update_q5.py}]
+\subsection{E. update\_q5.py -- Q5结果整合与result文件输出}
+\begin{lstlisting}[language=Python, caption={E. update\_q5.py}]
 import numpy as np, json, openpyxl
 from core import *
 from optimizer import calc_time_precise, calc_multi_bomb_time
@@ -1368,7 +1370,7 @@ from optimizer import calc_time_precise, calc_multi_bomb_time
 def log(msg): print(msg, flush=True)
 
 # 加载之前的结果
-with open(r"C:\Users\wuyan\Desktop\xiaosai\A题_solution\stage2\results.json") as f:
+with open("results.json") as f:
     R = json.load(f)
 
 # FY4新参数(逆向运动学找到的)
@@ -1438,7 +1440,7 @@ for uid in ['FY1','FY2','FY3','FY4','FY5']:
 
 ws.append([None]*12)
 ws.append([None,'注：以x轴为正向，逆时针方向为正，取值0~360（度）。']+[None]*10)
-wb.save(r"C:\Users\wuyan\Desktop\xiaosai\A题_solution\stage2\result3.xlsx")
+wb.save("result3.xlsx")
 log("  result3.xlsx 已更新")
 
 # 保存更新后的结果
@@ -1453,12 +1455,158 @@ q5_new = {
         'T': round(all_results[uid][5], 4),
     } for uid in all_results}
 }
-with open(r"C:\Users\wuyan\Desktop\xiaosai\A题_solution\stage2\q5_updated.json", 'w') as f:
+with open("q5_updated.json", 'w') as f:
     json.dump(q5_new, f, indent=2, ensure_ascii=False)
 log("  q5_updated.json 已保存")
 
 log(f"\n最终汇总:")
 log(f"Q1: 1.392s, Q2: 4.578s, Q3: 6.405s, Q4: 11.506s, Q5: {total_T:.4f}s")
+\end{lstlisting}
+
+\subsection{F. q5\_multi.py -- Q5多弹接力搜索与result3.xlsx输出}
+\begin{lstlisting}[language=Python, caption={F. q5\_multi.py}]
+"""
+Q5 多弹搜索: 对每架UAV逐弹搜索第2、3弹(固定theta,v)
+如实报告结果,每架机填满3行
+"""
+import numpy as np, json, openpyxl
+from core import *
+from optimizer import calc_time_fast, calc_time_precise, calc_multi_bomb_time
+
+def log(msg): print(msg, flush=True)
+
+with open(r"q5_updated.json") as f:
+    R = json.load(f)
+
+# 当前分配
+details = R['details']
+
+final_bombs = {}
+total_union = 0.0
+
+for uid in ['FY1','FY2','FY3','FY4','FY5']:
+    d = details[uid]
+    mid = d['missile']
+    th = np.radians(d['theta_deg'])
+    v = d['v']
+    tr1 = d['t_rel']
+    df1 = d['dt_fuse']
+    T1 = d['T']
+
+    log(f"\n{'='*50}")
+    log(f"{uid}→{mid} | θ={d['theta_deg']:.2f}°, v={v:.1f}, 弹1: T={T1:.3f}s")
+    log(f"{'='*50}")
+
+    bombs = [(tr1, df1)]
+    T_current = T1
+
+    # 搜索第2弹
+    log(f"  搜索第2弹 (t_rel≥{tr1+1:.1f}s)...")
+    best_union_2 = T_current
+    best_2 = None
+
+    for df2 in np.arange(0, 10.5, 1.0):
+        if UAVS[uid][2] - 4.9*df2**2 < 0: break
+        for tr2 in np.arange(tr1+1, 50, 1.0):
+            T_u, singles, _ = calc_multi_bomb_time(mid, uid, th, v,
+                [(tr1, df1), (tr2, df2)], dt_step=0.05, n_samples=60)
+            if T_u > best_union_2 + 0.05:  # 有显著增量
+                best_union_2 = T_u
+                best_2 = (tr2, df2, T_u)
+
+    if best_2:
+        tr2, df2, Tu2 = best_2
+        # PSO精修
+        rng = np.random.RandomState(hash(uid+"2")%1000)
+        n_p, n_i = 20, 25
+        lb = np.array([max(tr1+1, tr2-2), max(0, df2-1.5)])
+        ub = np.array([tr2+2, df2+1.5])
+        pos = rng.uniform(lb, ub, (n_p, 2))
+        pos[0] = [tr2, df2]
+        vel2 = np.zeros((n_p, 2))
+        pb2 = pos.copy()
+        def fit2(x):
+            tr, df = x
+            if tr<tr1+1: return 0.0
+            if UAVS[uid][2]-0.5*G*df**2<0: return 0.0
+            Tu,_,_ = calc_multi_bomb_time(mid,uid,th,v,[(tr1,df1),(tr,df)],dt_step=0.02,n_samples=80)
+            return Tu
+        pf2 = np.array([fit2(p) for p in pos])
+        gi = np.argmax(pf2); gb,gf = pos[gi].copy(),pf2[gi]
+        for it in range(n_i):
+            r1,r2 = rng.random((n_p,2)),rng.random((n_p,2))
+            vel2 = 0.6*vel2+1.8*r1*(pb2-pos)+1.8*r2*(gb-pos)
+            pos = np.clip(pos+vel2, lb, ub)
+            for i in range(n_p):
+                f = fit2(pos[i])
+                if f>pf2[i]: pf2[i],pb2[i]=f,pos[i].copy()
+                if f>gf: gf,gb=f,pos[i].copy()
+        tr2,df2 = gb
+        Tu2, s2, _ = calc_multi_bomb_time(mid,uid,th,v,[(tr1,df1),(tr2,df2)],dt_step=0.01,n_samples=180)
+        log(f"    第2弹: tr={tr2:.3f}, df={df2:.3f}, 并集={Tu2:.3f}s, 增量={Tu2-T_current:.3f}s")
+        bombs.append((tr2, df2))
+        T_current = Tu2
+    else:
+        log(f"    第2弹无增量 (最佳并集={best_union_2:.3f}s)")
+
+    # 搜索第3弹
+    last_tr = bombs[-1][0]
+    log(f"  搜索第3弹 (t_rel≥{last_tr+1:.1f}s)...")
+    best_union_3 = T_current
+    best_3 = None
+
+    for df3 in np.arange(0, 10.5, 1.0):
+        if UAVS[uid][2] - 4.9*df3**2 < 0: break
+        for tr3 in np.arange(last_tr+1, 55, 1.0):
+            all_b = bombs + [(tr3, df3)]
+            T_u, _, _ = calc_multi_bomb_time(mid, uid, th, v, all_b, dt_step=0.05, n_samples=60)
+            if T_u > best_union_3 + 0.05:
+                best_union_3 = T_u
+                best_3 = (tr3, df3, T_u)
+
+    if best_3:
+        tr3, df3, Tu3 = best_3
+        bombs.append((tr3, df3))
+        T_current = Tu3
+        log(f"    第3弹: tr={tr3:.3f}, df={df3:.3f}, 并集={Tu3:.3f}s")
+    else:
+        log(f"    第3弹无增量 (最佳并集={best_union_3:.3f}s)")
+
+    # 精确验证最终并集
+    T_final, singles, _ = calc_multi_bomb_time(mid, uid, th, v, bombs, dt_step=0.005, n_samples=240)
+    total_union += T_final
+    final_bombs[uid] = (mid, th, v, bombs, T_final)
+    log(f"  → 最终{len(bombs)}弹, 并集={T_final:.3f}s")
+
+log(f"\n{'='*50}")
+log(f"Q5总遮蔽(并集求和): {total_union:.3f}s")
+log(f"{'='*50}")
+
+# 写result3.xlsx
+wb = openpyxl.Workbook(); ws = wb.active; ws.title="Sheet1"
+ws.append(['无人机编号','无人机运动方向','无人机运动速度 (m/s)','烟幕干扰弹编号',
+    '烟幕干扰弹投放点的x坐标 (m)','烟幕干扰弹投放点的y坐标 (m)','烟幕干扰弹投放点的z坐标 (m)',
+    '烟幕干扰弹起爆点的x坐标 (m)','烟幕干扰弹起爆点的y坐标 (m)','烟幕干扰弹起爆点的z坐标 (m)',
+    '有效干扰时长 (s)','干扰的导弹编号'])
+
+for uid in ['FY1','FY2','FY3','FY4','FY5']:
+    mid, th, v, bombs, T_final = final_bombs[uid]
+    for j,(tr,df) in enumerate(bombs):
+        drop = uav_pos(uid, th, v, tr)
+        bp, _ = burst_point(uid, th, v, tr, df)
+        # 单弹遮蔽时长
+        Ts, _, _, _ = calc_time_precise(mid, uid, th, v, tr, df) if tr>0 else (0,[],np.zeros(3),0)
+        ws.append([uid, round(np.degrees(th)%360,4), round(v,4), j+1,
+                   round(drop[0],4),round(drop[1],4),round(drop[2],4),
+                   round(bp[0],4),round(bp[1],4),round(bp[2],4), round(Ts,4), mid])
+    # 补空行至3弹
+    for j in range(len(bombs), 3):
+        ws.append([uid, None, None, j+1] + [None]*8)
+
+ws.append([None]*12)
+ws.append([None,'注：以x轴为正向，逆时针方向为正，取值0~360（度）。']+[None]*10)
+wb.save(r"result3.xlsx")
+log("result3.xlsx 已更新")
 \end{lstlisting}
 
 \begin{thebibliography}{99}
